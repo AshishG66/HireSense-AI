@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hiresense-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hiresense
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hiresense"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hiresense-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: hiresense-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/hiresense?schema=public
+      - AI_SERVICE_URL=http://ai-service:8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+      until npx prisma db push; do
+        echo 'Waiting for postgres db structure setup...'
+        sleep 2
+      done
+      npm run dev
+      "
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - hiresense-network
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: hiresense-ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - BACKEND_URL=http://backend:5000
+    volumes:
+      - ./ai-service:/app
+    networks:
+      - hiresense-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: hiresense-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+      - VITE_AI_SERVICE_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+      - ai-service
+    networks:
+      - hiresense-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  hiresense-network:
+    driver: bridge

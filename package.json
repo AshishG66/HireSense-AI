@@ -1,0 +1,23 @@
+{
+  "name": "hiresense-ai-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "description": "HireSense AI - AI-powered Interview Preparation & Recruitment Platform",
+  "scripts": {
+    "prepare": "node node_modules/husky/bin.js",
+    "lint:frontend": "npm --prefix frontend run lint",
+    "lint:backend": "npm --prefix backend run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,css,md,py}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,css,md,py}\""
+  },
+  "devDependencies": {
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx,json,css}": [
+      "prettier --write"
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hiresense-postgres-prod
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hiresense
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hiresense"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hiresense-prod-network
+    restart: always
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: hiresense-backend-prod
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/hiresense?schema=public
+      - AI_SERVICE_URL=http://ai-service:8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - JWT_SECRET=fallback-secret-key-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+      until npx prisma db push; do
+        echo 'Waiting for database build...'
+        sleep 2
+      done
+      node dist/server.js
+      "
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - hiresense-prod-network
+    restart: always
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+      target: production
+    container_name: hiresense-ai-service-prod
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - BACKEND_URL=http://backend:5000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - hiresense-prod-network
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        - VITE_API_URL=http://localhost:5000
+        - VITE_AI_SERVICE_URL=http://localhost:8000
+    container_name: hiresense-frontend-prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - ai-service
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - hiresense-prod-network
+    restart: always
+
+volumes:
+  postgres_prod_data:
+
+networks:
+  hiresense-prod-network:
+    driver: bridge

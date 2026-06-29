@@ -1,0 +1,574 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "HireSense AI API Documentation",
+    "description": "Comprehensive interactive API Reference for the HireSense AI Interview Preparation & Recruitment Platform.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "API Gateway Router"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    },
+    {
+      "cookieAuth": []
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register a new User profile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "role"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "candidate@hiresense.ai" },
+                  "password": { "type": "string", "minLength": 6, "example": "securepassword123" },
+                  "role": { "type": "string", "enum": ["CANDIDATE", "RECRUITER", "ADMIN"], "example": "CANDIDATE" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "User profile registered successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "email": { "type": "string" },
+                        "role": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Authenticate User session credentials",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "recruiter@hiresense.ai" },
+                  "password": { "type": "string", "example": "securepassword123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "headers": {
+              "Set-Cookie": {
+                "schema": { "type": "string", "example": "token=jwt_token_here; HttpOnly; Secure; SameSite=Strict" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string", "example": "jwt_access_token_here" },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string", "format": "uuid" },
+                            "email": { "type": "string" },
+                            "role": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/401" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Refresh expired access token",
+        "responses": {
+          "200": {
+            "description": "Access token refreshed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string", "example": "new_jwt_access_token" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Invalidate user cookie session",
+        "responses": {
+          "200": {
+            "description": "Logged out successfully"
+          }
+        }
+      }
+    },
+    "/jobs": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "Fetch list of active job postings",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Filter by job title or keywords" },
+          { "name": "location", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Job" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Jobs"],
+        "summary": "Create a new Job posting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Job" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Job created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": { "$ref": "#/components/schemas/Job" }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/403" }
+        }
+      }
+    },
+    "/applications": {
+      "get": {
+        "tags": ["Applications"],
+        "summary": "Fetch submitted job applications",
+        "responses": {
+          "200": {
+            "description": "Array of applications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Application" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}/status": {
+      "patch": {
+        "tags": ["Applications"],
+        "summary": "Update application hiring status",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["APPLIED", "RESUME_SCREENING", "TECHNICAL_INTERVIEW", "HR_INTERVIEW", "OFFER", "HIRED", "REJECTED"], "example": "TECHNICAL_INTERVIEW" },
+                  "notes": { "type": "string", "example": "Passed recruiter screen, scheduling code loop." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated successfully"
+          }
+        }
+      }
+    },
+    "/resumes/upload": {
+      "post": {
+        "tags": ["Resume & AI Analysis"],
+        "summary": "Upload and parse a new resume document version",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["resume"],
+                "properties": {
+                  "resume": { "type": "string", "format": "binary", "description": "PDF resume file" },
+                  "title": { "type": "string", "example": "Resume Python dev" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Resume upload accepted and background parsing queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Resume parsing initiated" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "jobId": { "type": "string", "format": "uuid" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resumes/compare": {
+      "post": {
+        "tags": ["Resume & AI Analysis"],
+        "summary": "Compare two resume versions",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["versionId1", "versionId2"],
+                "properties": {
+                  "versionId1": { "type": "string", "format": "uuid" },
+                  "versionId2": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resume comparisons analytics metadata"
+          }
+        }
+      }
+    },
+    "/interviews": {
+      "post": {
+        "tags": ["AI Mock Interviews"],
+        "summary": "Initiate a mock screening session",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["difficulty", "interviewType"],
+                "properties": {
+                  "difficulty": { "type": "string", "enum": ["EASY", "MEDIUM", "HARD"], "example": "MEDIUM" },
+                  "interviewType": { "type": "string", "example": "Fullstack Software Engineer" },
+                  "companyName": { "type": "string", "example": "Google" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session created successfully"
+          }
+        }
+      }
+    },
+    "/interviews/{id}/evaluate": {
+      "post": {
+        "tags": ["AI Mock Interviews"],
+        "summary": "Submit candidate response transcript for evaluation",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["questionId", "transcript"],
+                "properties": {
+                  "questionId": { "type": "string", "format": "uuid" },
+                  "transcript": { "type": "string", "example": "I would use a hash map to find the indices of two elements summing to target." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI evaluation details saved"
+          }
+        }
+      }
+    },
+    "/assessments/tests": {
+      "post": {
+        "tags": ["Coding Assessments"],
+        "summary": "Create a coding test challenge (Recruiter)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "duration", "passingScore", "allowedLanguages"],
+                "properties": {
+                  "title": { "type": "string", "example": "Algorithms Screening Round 1" },
+                  "description": { "type": "string", "example": "Complete two algorithmic challenges." },
+                  "duration": { "type": "integer", "example": 60 },
+                  "passingScore": { "type": "integer", "example": 70 },
+                  "visibility": { "type": "string", "enum": ["PUBLIC", "PRIVATE"], "example": "PRIVATE" },
+                  "negativeMarking": { "type": "boolean", "example": false },
+                  "randomQuestionOrder": { "type": "boolean", "example": false },
+                  "allowedLanguages": { "type": "array", "items": { "type": "string" }, "example": ["javascript", "python"] },
+                  "questions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["codingQuestionId", "orderIndex"],
+                      "properties": {
+                        "codingQuestionId": { "type": "string", "format": "uuid" },
+                        "orderIndex": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Test challenge created successfully"
+          }
+        }
+      }
+    },
+    "/assessments/candidate/questions/{questionId}/submit": {
+      "post": {
+        "tags": ["Coding Assessments"],
+        "summary": "Submit candidate solution code (Candidate)",
+        "parameters": [
+          { "name": "questionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["code", "languageCode"],
+                "properties": {
+                  "code": { "type": "string", "example": "function solve(nums, target) { return [0, 1]; }" },
+                  "languageCode": { "type": "string", "example": "javascript" },
+                  "codingTestId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Grading results compiled"
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Fetch alert notifications log",
+        "responses": {
+          "200": {
+            "description": "List of notifications"
+          }
+        }
+      }
+    },
+    "/users/admin/analytics": {
+      "get": {
+        "tags": ["Admin Console"],
+        "summary": "Get platform-wide usage metrics",
+        "responses": {
+          "200": {
+            "description": "Usage analytical graphs data"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "token"
+      }
+    },
+    "schemas": {
+      "Job": {
+        "type": "object",
+        "required": ["title", "description", "salaryMin", "salaryMax", "remoteType", "experienceLevel"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string", "example": "Senior Node.js Backend Engineer" },
+          "description": { "type": "string", "example": "Responsible for managing high-scale core API services." },
+          "salaryMin": { "type": "integer", "example": 120000 },
+          "salaryMax": { "type": "integer", "example": 150000 },
+          "remoteType": { "type": "string", "enum": ["REMOTE", "HYBRID", "ON_SITE"], "example": "REMOTE" },
+          "experienceLevel": { "type": "string", "example": "Senior" }
+        }
+      },
+      "Application": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string", "example": "Descriptive query error description details" }
+        }
+      }
+    },
+    "responses": {
+      "400": {
+        "description": "Validation failed",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "401": {
+        "description": "Authentication credentials failed",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "403": {
+        "description": "Forbidden resource access",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "404": {
+        "description": "Target entity was not found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    }
+  }
+}

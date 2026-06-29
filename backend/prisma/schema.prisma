@@ -1,0 +1,653 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -------------------------------------------------------------
+// Enums
+// -------------------------------------------------------------
+
+// Job posting statuses
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+// Candidate application states
+enum ApplicationStatus {
+  APPLIED
+  RESUME_SCREENING
+  TECHNICAL_INTERVIEW
+  HR_INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  EVALUATED
+  FAILED
+}
+
+enum NotificationType {
+  APPLICATION_STATUS
+  INTERVIEW_SCHEDULED
+  ALERT
+}
+
+// -------------------------------------------------------------
+// Models
+// -------------------------------------------------------------
+
+// 1. Role (Lookup for security scopes)
+model Role {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+
+  @@index([name])
+}
+
+// 2. User (Core accounts authentication identities)
+model User {
+  id                   String    @id @default(uuid()) @db.Uuid
+  email                String    @unique
+  passwordHash         String
+  isEmailVerified      Boolean   @default(false)
+  verificationToken    String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
+
+  // Relations
+  roleId String @db.Uuid
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  candidateProfile  CandidateProfile?
+  recruiterProfile  RecruiterProfile?
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  statusChanges     ApplicationStatusHistory[]
+
+  @@index([email])
+  @@index([roleId])
+}
+
+// 3. CandidateProfile (Metadata 1-to-1 with User)
+model CandidateProfile {
+  id           String    @id @default(uuid()) @db.Uuid
+  firstName    String
+  lastName     String
+  phone        String?
+  avatarUrl    String?
+  skills       String[]
+  experience   Json?
+  education    Json?
+  portfolioUrl String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  // Relations
+  userId String @unique @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  resumes          Resume[]
+  applications     Application[]
+  interviewAnswers InterviewAnswer[]
+  savedJobs        SavedJob[]
+  interviewSessions InterviewSession[]
+  codingSubmissions CodingSubmission[]
+  contestParticipations ContestParticipant[]
+  leaderboardRanks Leaderboard[]
+
+  @@index([userId])
+}
+
+// 4. RecruiterProfile (Tenant link 1-to-1 with User)
+model RecruiterProfile {
+  id         String    @id @default(uuid()) @db.Uuid
+  firstName  String
+  lastName   String
+  phone      String?
+  department String?
+  jobTitle   String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  // Relations
+  userId String @unique @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  companyId String  @db.Uuid
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  jobs              Job[]
+  interviewSessions InterviewSession[]
+  codingTests       CodingTest[]
+
+  @@index([userId])
+  @@index([companyId])
+}
+
+// 5. Company (Multi-tenant employer account)
+model Company {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  logoUrl     String?
+  website     String?
+  description String?
+  industry    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relations
+  recruiters RecruiterProfile[]
+  jobs       Job[]
+
+  @@index([name])
+}
+
+// 6. Job (Role descriptions)
+model Job {
+  id                 String           @id @default(uuid()) @db.Uuid
+  title              String
+  description        String
+  responsibilities   String
+  requiredSkills     String[]
+  preferredSkills    String[]
+  salaryMin          Int
+  salaryMax          Int
+  experienceLevel    String
+  employmentType     String
+  location           String?
+  remoteType         String
+  openings           Int
+  deadline           DateTime?
+  status             JobStatus        @default(DRAFT)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  deletedAt          DateTime?
+
+  // Relations
+  companyId          String           @db.Uuid
+  company            Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  recruiterProfileId String           @db.Uuid
+  recruiterProfile   RecruiterProfile @relation(fields: [recruiterProfileId], references: [id], onDelete: Cascade)
+
+  applications       Application[]
+  savedJobs          SavedJob[]
+
+  @@index([companyId])
+  @@index([recruiterProfileId])
+  @@index([status])
+}
+
+// 7. Application (Applicants registry)
+model Application {
+  id        String            @id @default(uuid()) @db.Uuid
+  status    ApplicationStatus @default(APPLIED)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  candidateProfileId String           @db.Uuid
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  jobId String @db.Uuid
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  resumeVersionId String        @db.Uuid
+  resumeVersion   ResumeVersion @relation(fields: [resumeVersionId], references: [id], onDelete: Restrict)
+
+  interviewSessions InterviewSession[]
+  statusHistory     ApplicationStatusHistory[]
+
+  // Constraints
+  @@unique([candidateProfileId, jobId])
+  @@index([candidateProfileId])
+  @@index([jobId])
+  @@index([status])
+}
+
+// 8. Resume (Candidate CV slot container catalog)
+model Resume {
+  id                 String           @id @default(uuid()) @db.Uuid
+  title              String
+  isDefault          Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  deletedAt          DateTime?
+
+  // Relations
+  candidateProfileId String           @db.Uuid
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  versions           ResumeVersion[]
+
+  @@index([candidateProfileId])
+}
+
+// 9. ResumeVersion (Resume document version files)
+model ResumeVersion {
+  id            String    @id @default(uuid()) @db.Uuid
+  fileUrl       String
+  fileName      String
+  mimeType      String?
+  size          Int?
+  storagePath   String?
+  versionNumber Int
+  rawText       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  // Relations
+  resumeId String @db.Uuid
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  analysis     ResumeAnalysis?
+  applications Application[]
+
+  @@index([resumeId])
+}
+
+// 10. ResumeAnalysis (AI parsed evaluations 1-to-1 with specific resume versions)
+model ResumeAnalysis {
+  id              String        @id @default(uuid()) @db.Uuid
+  matchScore      Float
+  skillsMatched   String[]
+  skillsMissing   String[]
+  strengths       String[]
+  improvements    String[]
+  summary         String
+  details         Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+
+  // Relations
+  resumeVersionId String        @unique @db.Uuid
+  resumeVersion   ResumeVersion @relation(fields: [resumeVersionId], references: [id], onDelete: Cascade)
+
+  @@index([resumeVersionId])
+}
+
+// 11. InterviewSession (AI automated video screening sessions)
+model InterviewSession {
+  id          String          @id @default(uuid()) @db.Uuid
+  status      InterviewStatus @default(SCHEDULED)
+  scheduledAt DateTime
+  startedAt   DateTime?
+  completedAt DateTime?
+  feedback    String?
+  score       Float?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+
+  companyName   String?
+  jobRole       String?
+  difficulty    String?
+  interviewType String?
+  feedbackDetails Json?
+
+  // Relations
+  applicationId String?      @db.Uuid
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  recruiterProfileId String?           @db.Uuid
+  recruiterProfile   RecruiterProfile? @relation(fields: [recruiterProfileId], references: [id], onDelete: Cascade)
+
+  candidateProfileId String?           @db.Uuid
+  candidateProfile   CandidateProfile? @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  questions InterviewQuestion[]
+
+  @@index([applicationId])
+  @@index([recruiterProfileId])
+  @@index([candidateProfileId])
+  @@index([status])
+}
+
+// 12. InterviewQuestion (Structural session screening queries)
+model InterviewQuestion {
+  id               String    @id @default(uuid()) @db.Uuid
+  questionText     String
+  expectedCriteria String?
+  orderIndex       Int
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  // Relations
+  sessionId String           @db.Uuid
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  answers InterviewAnswer[]
+
+  @@index([sessionId])
+}
+
+// 13. InterviewAnswer (Speech transcripts and grades)
+model InterviewAnswer {
+  id         String    @id @default(uuid()) @db.Uuid
+  audioUrl   String?
+  transcript String?
+  duration   Int?
+  aiFeedback String?
+  aiScore    Float?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  technicalAccuracy Float?
+  communication     Float?
+  problemSolving    Float?
+  confidence        Float?
+  completeness      Float?
+  grammar           Float?
+
+  // Relations
+  questionId String            @db.Uuid
+  question   InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  candidateProfileId String           @db.Uuid
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  // Constraints
+  @@unique([questionId, candidateProfileId])
+  @@index([questionId])
+  @@index([candidateProfileId])
+}
+
+// 14. Notification (Alert logs)
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  title     String
+  message   String
+  type      NotificationType @default(ALERT)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relations
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+// 15. AuditLog (Platform actions logger)
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId String? @db.Uuid
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+}
+
+// 16. RefreshToken (Bearer tokens registry)
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  token     String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+// 17. SavedJob (Candidates bookmarking listings)
+model SavedJob {
+  id                 String           @id @default(uuid()) @db.Uuid
+  createdAt          DateTime         @default(now())
+
+  candidateProfileId String           @db.Uuid
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  jobId              String           @db.Uuid
+  job                Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateProfileId, jobId])
+  @@index([candidateProfileId])
+  @@index([jobId])
+}
+
+// 18. ApplicationStatusHistory (Tracks pipeline progress details)
+model ApplicationStatusHistory {
+  id            String            @id @default(uuid()) @db.Uuid
+  status        ApplicationStatus
+  changedAt     DateTime          @default(now())
+  notes         String?
+
+  applicationId String            @db.Uuid
+  application   Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  changedById   String?           @db.Uuid
+  changedBy     User?             @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([changedById])
+}
+
+// 19. CodingLanguage (Languages metadata registry)
+model CodingLanguage {
+  id        String             @id @default(uuid()) @db.Uuid
+  name      String             @unique
+  code      String             @unique
+  isActive  Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  submissions CodingSubmission[]
+}
+
+// 20. CodingQuestion (Coding problems definition bank)
+model CodingQuestion {
+  id           String               @id @default(uuid()) @db.Uuid
+  title        String
+  description  String               @db.Text
+  difficulty   String               @default("MEDIUM")
+  points       Int                  @default(10)
+  timeLimit    Int                  @default(2000)
+  memoryLimit  Int                  @default(262144)
+  category     String               @default("Algorithms")
+  hints        String[]
+  editorial    String?              @db.Text
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  testCases    TestCase[]
+  testQuestions CodingTestQuestion[]
+  submissions  CodingSubmission[]
+}
+
+// 21. TestCase (Compilation verification specs)
+model TestCase {
+  id             String         @id @default(uuid()) @db.Uuid
+  input          String         @db.Text
+  expectedOutput String         @db.Text
+  isSample       Boolean        @default(false)
+  isHidden       Boolean        @default(false)
+  explanation    String?        @db.Text
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  codingQuestionId String         @db.Uuid
+  codingQuestion   CodingQuestion @relation(fields: [codingQuestionId], references: [id], onDelete: Cascade)
+
+  executions CodingExecution[]
+
+  @@index([codingQuestionId])
+}
+
+// 22. CodingTest (Recruiter generated assessment)
+model CodingTest {
+  id                 String               @id @default(uuid()) @db.Uuid
+  title              String
+  description        String?              @db.Text
+  duration           Int                  @default(60)
+  passingScore       Int                  @default(60)
+  visibility         String               @default("PRIVATE")
+  negativeMarking    Boolean              @default(false)
+  randomQuestionOrder Boolean              @default(false)
+  allowedLanguages   String[]
+  inviteLink         String?              @unique
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  deletedAt          DateTime?
+
+  recruiterProfileId String               @db.Uuid
+  recruiterProfile   RecruiterProfile     @relation(fields: [recruiterProfileId], references: [id], onDelete: Cascade)
+
+  questions   CodingTestQuestion[]
+  submissions CodingSubmission[]
+
+  @@index([recruiterProfileId])
+}
+
+// 23. CodingTestQuestion (Mapping table with order)
+model CodingTestQuestion {
+  id               String         @id @default(uuid()) @db.Uuid
+  orderIndex       Int            @default(0)
+  createdAt        DateTime       @default(now())
+
+  codingTestId     String         @db.Uuid
+  codingTest       CodingTest     @relation(fields: [codingTestId], references: [id], onDelete: Cascade)
+
+  codingQuestionId String         @db.Uuid
+  codingQuestion   CodingQuestion @relation(fields: [codingQuestionId], references: [id], onDelete: Cascade)
+
+  @@unique([codingTestId, codingQuestionId])
+  @@index([codingTestId])
+  @@index([codingQuestionId])
+}
+
+// 24. CodingSubmission (Submissions registry details)
+model CodingSubmission {
+  id            String          @id @default(uuid()) @db.Uuid
+  code          String          @db.Text
+  status        String          @default("QUEUED")
+  score         Int             @default(0)
+  executionTime Int             @default(0)
+  memoryUsage   Int             @default(0)
+  aiFeedback    Json?
+  createdAt     DateTime        @default(now())
+
+  languageId    String          @db.Uuid
+  language      CodingLanguage  @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  candidateProfileId String           @db.Uuid
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  codingQuestionId String         @db.Uuid
+  codingQuestion   CodingQuestion @relation(fields: [codingQuestionId], references: [id], onDelete: Cascade)
+
+  codingTestId     String?        @db.Uuid
+  codingTest       CodingTest?    @relation(fields: [codingTestId], references: [id], onDelete: SetNull)
+
+  executions CodingExecution[]
+
+  @@index([languageId])
+  @@index([candidateProfileId])
+  @@index([codingQuestionId])
+  @@index([codingTestId])
+}
+
+// 25. CodingExecution (Isolated test case run statistics)
+model CodingExecution {
+  id           String           @id @default(uuid()) @db.Uuid
+  status       String           @default("FAILED")
+  runtime      Int              @default(0)
+  memory       Int              @default(0)
+  stdout       String?          @db.Text
+  stderr       String?          @db.Text
+  actualOutput String?          @db.Text
+  createdAt    DateTime         @default(now())
+
+  submissionId String           @db.Uuid
+  submission   CodingSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  testCaseId   String           @db.Uuid
+  testCase     TestCase         @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@index([testCaseId])
+}
+
+// 26. Contest (Practice hackathons)
+model Contest {
+  id          String               @id @default(uuid()) @db.Uuid
+  title       String
+  description String?              @db.Text
+  startTime   DateTime
+  endTime     DateTime
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  participants ContestParticipant[]
+}
+
+// 27. ContestParticipant (Contests registry)
+model ContestParticipant {
+  id           String           @id @default(uuid()) @db.Uuid
+  registeredAt DateTime         @default(now())
+
+  contestId    String           @db.Uuid
+  contest      Contest          @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  candidateProfileId String           @db.Uuid
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, candidateProfileId])
+  @@index([contestId])
+  @@index([candidateProfileId])
+}
+
+// 28. Leaderboard (Rank calculations registry)
+model Leaderboard {
+  id         String   @id @default(uuid()) @db.Uuid
+  totalScore Int      @default(0)
+  rank       Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  candidateProfileId String           @db.Uuid
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+
+  @@index([candidateProfileId])
+}
