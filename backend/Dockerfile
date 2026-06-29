@@ -1,5 +1,6 @@
 # Development stage
-FROM node:20-alpine AS development
+FROM node:20-bookworm-slim AS development
+RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -9,7 +10,8 @@ EXPOSE 5000
 CMD ["npm", "run", "dev"]
 
 # Build stage
-FROM node:20-alpine AS build
+FROM node:20-bookworm-slim AS build
+RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -19,7 +21,8 @@ RUN npm run build
 RUN mkdir -p dist/config && cp src/config/swagger.json dist/config/swagger.json
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20-bookworm-slim AS production
+RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
