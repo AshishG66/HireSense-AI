@@ -48,7 +48,7 @@ export default function CandidateAssessments() {
         setStats(statsRes.data.data);
         setQuestions(questionsRes.data.data || []);
       } catch (err: any) {
-        triggerToast('Failed to load coding dashboard: ' + (err.response?.data?.message || err.message));
+        triggerToast('Unable to retrieve coding dashboard: ' + (err.response?.data?.message || err.message));
       } finally {
         setLoading(false);
       }

@@ -46,7 +46,7 @@ export default function InterviewReport() {
         const res = await api.get(`/interviews/${id}`);
         setSession(res.data.data);
       } catch (err: any) {
-        triggerToast('Failed to load interview report: ' + (err.response?.data?.message || err.message));
+        triggerToast('Unable to retrieve interview report: ' + (err.response?.data?.message || err.message));
       } finally {
         setLoading(false);
       }

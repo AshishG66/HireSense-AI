@@ -44,7 +44,7 @@ export default function RecruiterInterviewReports() {
         const res = await api.get('/interviews/recruiter/reports');
         setSessions(res.data.data || []);
       } catch (err: any) {
-        triggerToast('Failed to load candidate reports: ' + (err.response?.data?.message || err.message));
+        triggerToast('Unable to retrieve candidate reports: ' + (err.response?.data?.message || err.message));
       } finally {
         setLoading(false);
       }

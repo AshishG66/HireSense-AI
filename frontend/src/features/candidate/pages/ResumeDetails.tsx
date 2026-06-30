@@ -50,7 +50,7 @@ export default function ResumeDetails() {
       setResume(res.data.data);
       setNewTitle(res.data.data.title);
     } catch (err: any) {
-      triggerToast('Failed to load resume details: ' + (err.response?.data?.message || err.message));
+      triggerToast('Unable to retrieve resume details: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }

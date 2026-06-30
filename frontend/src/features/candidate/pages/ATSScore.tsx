@@ -32,7 +32,7 @@ export default function ATSScore() {
           setAnalysis(latestVer.analysis);
         }
       } catch (err) {
-        console.error('Failed to load ATS details:', err);
+        console.error('Unable to retrieve ATS details:', err);
       } finally {
         setLoading(false);
       }

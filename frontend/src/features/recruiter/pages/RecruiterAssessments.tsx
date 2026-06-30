@@ -61,7 +61,7 @@ export default function RecruiterAssessments() {
       setTests(testsRes.data.data || []);
       setQuestions(questionsRes.data.data || []);
     } catch (err: any) {
-      triggerToast('Failed to load assessment data: ' + (err.response?.data?.message || err.message));
+      triggerToast('Unable to retrieve assessment data: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }

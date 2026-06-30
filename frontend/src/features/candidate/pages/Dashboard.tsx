@@ -52,7 +52,7 @@ export default function CandidateDashboard() {
       setApplications(appsRes.data.data || []);
       setError('');
     } catch (err: any) {
-      setError(err.message || 'Failed to load Candidate dashboard context');
+      setError(err.message || 'Unable to retrieve Candidate dashboard context');
     } finally {
       setLoading(false);
     }

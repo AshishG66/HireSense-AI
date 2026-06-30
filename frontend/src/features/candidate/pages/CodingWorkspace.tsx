@@ -81,7 +81,7 @@ export default function CodingWorkspace() {
         // Load initial boilerplate
         setCode(boilerplates.javascript);
       } catch (err: any) {
-        triggerToast('Failed to load workspace data: ' + (err.response?.data?.message || err.message));
+        triggerToast('Unable to retrieve workspace data: ' + (err.response?.data?.message || err.message));
       } finally {
         setLoading(false);
       }

@@ -29,7 +29,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message = error.response?.data?.message || 'Something went wrong';
+    const message = error.response?.data?.message || 'An unexpected error occurred while processing your request';
     const errors = error.response?.data?.errors;
 
     return Promise.reject({

@@ -68,7 +68,7 @@ export default function RecruiterCandidates() {
       setNotes('');
       setIsDrawerOpen(true);
     } catch (err: any) {
-      alert('Failed to load application history details');
+      alert('Unable to retrieve application history details');
     }
   };
 
