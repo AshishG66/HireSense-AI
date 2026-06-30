@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   CardContent,
 } from '@/components/organisms/Card';
 import { Button } from '@/components/atoms/Button';
@@ -18,9 +15,6 @@ import {
   Star,
   ShieldCheck,
   ChevronRight,
-  TrendingUp,
-  AlertCircle,
-  TrendingDown,
 } from 'lucide-react';
 import api from '../../../utils/api';
 

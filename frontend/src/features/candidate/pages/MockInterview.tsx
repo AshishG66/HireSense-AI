@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -11,7 +11,7 @@ import { Button } from '@/components/atoms/Button';
 import { Badge } from '@/components/atoms/Badge';
 import { Input } from '@/components/atoms/Input';
 import { Select } from '@/components/atoms/Select';
-import Skeleton from '@/components/atoms/Skeleton';
+
 import Toast from '@/components/molecules/Toast';
 import {
   Mic,
@@ -20,10 +20,6 @@ import {
   Pause,
   RefreshCw,
   Video,
-  AlertCircle,
-  HelpCircle,
-  FileText,
-  UserCheck,
   ChevronLeft,
   ChevronRight,
   ClipboardList,

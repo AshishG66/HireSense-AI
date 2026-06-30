@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Card,
@@ -16,11 +16,9 @@ import {
   Flame,
   Trophy,
   CheckCircle,
-  HelpCircle,
   Clock,
   Sparkles,
   ChevronRight,
-  TrendingUp,
   Award,
 } from 'lucide-react';
 import api from '../../../utils/api';

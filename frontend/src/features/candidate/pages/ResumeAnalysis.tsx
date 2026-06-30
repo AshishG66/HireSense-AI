@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Card,
@@ -9,13 +9,12 @@ import {
 } from '@/components/organisms/Card';
 import { Button } from '@/components/atoms/Button';
 import { Badge } from '@/components/atoms/Badge';
-import { Input } from '@/components/atoms/Input';
+
 import Toast from '@/components/molecules/Toast';
 import {
   Sparkles,
   FileText,
   Upload,
-  Trophy,
   History,
   CheckCircle,
   AlertTriangle,
@@ -23,7 +22,6 @@ import {
   BookOpen,
   Briefcase,
   ChevronRight,
-  TrendingUp,
   Scale,
 } from 'lucide-react';
 import api from '../../../utils/api';
@@ -148,16 +146,15 @@ export default function ResumeAnalysis() {
       formData.append('resume', file);
       formData.append('title', title || file.name);
 
-      let res;
       if (selectedResume) {
         // Add as a new version
-        res = await api.post(`/resumes/${selectedResume.id}/versions`, formData, {
+        await api.post(`/resumes/${selectedResume.id}/versions`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         setToastMsg('New resume version uploaded successfully!');
       } else {
         // Upload initial resume
-        res = await api.post('/resumes', formData, {
+        await api.post('/resumes', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         setToastMsg('Resume uploaded successfully!');

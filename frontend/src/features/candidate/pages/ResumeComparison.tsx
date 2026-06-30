@@ -1,13 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
-  ChevronRight,
   TrendingUp,
   TrendingDown,
-  CheckCircle,
-  AlertTriangle,
-  XCircle,
   Scale,
 } from 'lucide-react';
 import {
@@ -17,7 +13,7 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/organisms/Card';
-import { Button } from '@/components/atoms/Button';
+
 import { Badge } from '@/components/atoms/Badge';
 import { Select } from '@/components/atoms/Select';
 import Skeleton from '@/components/atoms/Skeleton';

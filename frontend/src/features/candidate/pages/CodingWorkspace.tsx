@@ -1,30 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
 } from '@/components/organisms/Card';
 import { Button } from '@/components/atoms/Button';
 import { Badge } from '@/components/atoms/Badge';
-import Skeleton from '@/components/atoms/Skeleton';
+
 import Toast from '@/components/molecules/Toast';
 import {
-  Play,
   Terminal,
   Clock,
   Sparkles,
-  HelpCircle,
-  BookOpen,
   ChevronLeft,
   RefreshCw,
   Lightbulb,
-  FileCode,
-  CheckCircle,
-  AlertTriangle,
-  Code2,
 } from 'lucide-react';
 import api from '../../../utils/api';
 
@@ -36,7 +25,7 @@ export default function CodingWorkspace() {
 
   // Problem metadata
   const [question, setQuestion] = useState<any>(null);
-  const [languages, setLanguages] = useState<any[]>([]);
+  const [, setLanguages] = useState<any[]>([]);
   const [selectedLang, setSelectedLang] = useState('javascript');
   const [loading, setLoading] = useState(true);
 
@@ -174,8 +163,7 @@ export default function CodingWorkspace() {
       // Async fetch review history after submission
       setTimeout(async () => {
         try {
-          const checkRes = await api.get(`/assessments/candidate/questions/${id}`);
-          const updated = checkRes.data.data;
+          await api.get(`/assessments/candidate/questions/${id}`);
           // Retrieve last submission review
           const subList = await api.get('/assessments/candidate/dashboard');
           const lastSub = subList.data.data.submissionHistory[0];

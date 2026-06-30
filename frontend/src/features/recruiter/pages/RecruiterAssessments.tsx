@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardHeader,
@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/atoms/Button';
 import { Badge } from '@/components/atoms/Badge';
 import { Input } from '@/components/atoms/Input';
-import { Select } from '@/components/atoms/Select';
+
 import Skeleton from '@/components/atoms/Skeleton';
 import Toast from '@/components/molecules/Toast';
 import {
@@ -20,10 +20,8 @@ import {
   Clock,
   Award,
   Globe,
-  Settings,
   X,
   Sparkles,
-  Link2,
 } from 'lucide-react';
 import api from '../../../utils/api';
 
@@ -38,7 +36,7 @@ export default function RecruiterAssessments() {
   const [description, setDescription] = useState('');
   const [duration, setDuration] = useState('60');
   const [passingScore, setPassingScore] = useState('60');
-  const [visibility, setVisibility] = useState('PRIVATE');
+  const [visibility] = useState('PRIVATE');
   const [negativeMarking, setNegativeMarking] = useState(false);
   const [randomQuestionOrder, setRandomQuestionOrder] = useState(false);
   const [allowedLangs, setAllowedLangs] = useState<string[]>(['javascript', 'python']);

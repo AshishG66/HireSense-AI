@@ -1,17 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   Calendar,
-  FileText,
   Plus,
   Trash2,
-  CheckCircle2,
   ChevronRight,
-  Play,
   RefreshCw,
   UploadCloud,
-  FileDown,
 } from 'lucide-react';
 import {
   Card,
@@ -206,7 +202,7 @@ export default function ResumeDetails() {
             </CardHeader>
             <CardContent>
               <div className="relative border-l border-border pl-6 ml-4 space-y-8">
-                {resume.versions?.map((ver: any, index: number) => {
+                {resume.versions?.map((ver: any) => {
                   const score = ver.analysis?.matchScore || 0;
                   return (
                     <div key={ver.id} className="relative">
