@@ -3,6 +3,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
+import api from '../../../utils/api';
+import { useAuthStore } from '../../../stores/useAuthStore';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -21,8 +23,15 @@ export default function LoginForm() {
   });
 
   const onSubmit = async (data: LoginSchemaType) => {
-    // Simulated submit
-    console.warn('Logging in with:', data);
+    try {
+      const response = await api.post('/auth/login', data);
+      const user = response.data.data.user;
+      const login = useAuthStore.getState().login;
+      login(user);
+    } catch (error: any) {
+      console.error('Login failed', error);
+      alert(error.message || 'Login failed. Please try again.');
+    }
   };
 
   return (

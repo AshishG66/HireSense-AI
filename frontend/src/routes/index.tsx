@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import useAuthStore from '../stores/useAuthStore';
+import { LoginForm } from '../features/auth';
 
 // Lazy Loaded Candidate Portal Pages
 const CandidateDashboard = lazy(() => import('../features/candidate/pages/Dashboard'));
@@ -41,9 +42,13 @@ const AboutArchitecture = lazy(() => import('../features/design-system/AboutArch
 
 // Dynamic Index Dashboard Switcher Component
 const DashboardSwitcher = () => {
-  const { user } = useAuthStore() as any;
+  const { user, isAuthenticated } = useAuthStore() as any;
 
-  switch (user?.role) {
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  switch (user.role) {
     case 'CANDIDATE':
       return <CandidateDashboard />;
     case 'RECRUITER':
@@ -59,6 +64,7 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<div className="p-8 text-center text-muted-foreground font-semibold">Loading page components...</div>}>
       <Routes>
+        <Route path="/login" element={<div className="flex min-h-screen items-center justify-center bg-background"><div className="w-full max-w-md p-8 bg-card border border-border/40 rounded-2xl shadow-xl"><h1 className="text-2xl font-display font-bold text-foreground mb-6 text-center">Sign In</h1><LoginForm /></div></div>} />
         <Route path="/" element={<DashboardLayout />}>
           {/* Dynamic workspace role home */}
           <Route index element={<DashboardSwitcher />} />

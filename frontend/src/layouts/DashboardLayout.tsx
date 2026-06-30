@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
+import useAuthStore from '../stores/useAuthStore';
 import Sidebar from '../components/organisms/Sidebar';
 import Navbar from '../components/organisms/Navbar';
 import CommandPalette from '../components/organisms/CommandPalette';
@@ -7,6 +8,11 @@ import CommandPalette from '../components/organisms/CommandPalette';
 export default function DashboardLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const { isAuthenticated } = useAuthStore() as any;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="flex min-h-screen bg-background text-foreground transition-colors duration-200">

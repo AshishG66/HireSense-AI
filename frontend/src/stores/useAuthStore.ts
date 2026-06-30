@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import api from '../utils/api';
 
 interface User {
   id: string;
@@ -15,15 +16,14 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: {
-    id: 'CANDIDATE',
-    name: 'Alice Candidate',
-    email: 'candidate@hiresense.ai',
-    role: 'CANDIDATE',
-  },
-  isAuthenticated: true,
+  user: null,
+  isAuthenticated: false,
   login: (user) => set({ user, isAuthenticated: true }),
-  logout: () => set({ user: null, isAuthenticated: false }),
+  logout: () => {
+    api.post('/auth/logout').catch(console.error).finally(() => {
+      set({ user: null, isAuthenticated: false });
+    });
+  },
 }));
 
 export default useAuthStore;
