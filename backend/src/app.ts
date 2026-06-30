@@ -13,6 +13,8 @@ import v1Router from './routes/v1.routes';
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 // Inject Request ID tracer header
 app.use(requestIdMiddleware);
 

@@ -36,7 +36,7 @@ export const signAccessToken = (payload: TokenPayload): string => {
  * Sign a Refresh Token.
  */
 export const signRefreshToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, config.JWT_SECRET, {
+  return jwt.sign(payload, config.JWT_REFRESH_SECRET, {
     expiresIn: config.JWT_EXPIRES_IN as any,
   });
 };

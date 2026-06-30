@@ -3,9 +3,19 @@ import env from '../config/env';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
+let dbUrl = env.DATABASE_URL;
+if (dbUrl.includes('neon.tech') && !dbUrl.includes('pgbouncer=true')) {
+  dbUrl += (dbUrl.includes('?') ? '&' : '?') + 'pgbouncer=true';
+}
+
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
+    datasources: {
+      db: {
+        url: dbUrl,
+      },
+    },
     log: env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
 
