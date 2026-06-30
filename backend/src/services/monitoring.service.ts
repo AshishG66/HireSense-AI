@@ -65,6 +65,8 @@ export class MonitoringService {
     const memory = process.memoryUsage();
     const uptime = process.uptime();
     const pendingJobs = Math.max(0, Math.floor(Math.random() * 3));
+    const { usersRepository } = require('../repositories/users.repository');
+    const userCount = await usersRepository.count();
 
     return {
       uptime: `${Math.floor(uptime)}s`,
@@ -82,6 +84,9 @@ export class MonitoringService {
           heapUsedMb: Math.round(memory.heapUsed / 1024 / 1024),
           rssMb: Math.round(memory.rss / 1024 / 1024),
         },
+      },
+      users: {
+        total: userCount,
       },
       database: {
         status: dbStatus,

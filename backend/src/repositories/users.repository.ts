@@ -57,6 +57,10 @@ export class UsersRepository {
     });
   }
 
+  async count() {
+    return prisma.user.count();
+  }
+
   async findById(id: string) {
     return prisma.user.findUnique({
       where: { id },

@@ -22,7 +22,7 @@ app.use(helmet());
 // Enable Cross-Origin Resource Sharing
 app.use(
   cors({
-    origin: env.CORS_ORIGIN === '*' ? '*' : env.CORS_ORIGIN.split(','),
+    origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN.split(','),
     credentials: true,
   }),
 );

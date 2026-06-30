@@ -5,6 +5,7 @@ import {
 } from '@/components/organisms/Card';
 import { Button } from '@/components/atoms/Button';
 import { Badge } from '@/components/atoms/Badge';
+import Editor from '@monaco-editor/react';
 
 import Toast from '@/components/molecules/Toast';
 import {
@@ -370,13 +371,25 @@ export default function CodingWorkspace() {
           </div>
 
           {/* Styled Text Code Editor */}
-          <div className="relative border border-border/40 rounded-xl overflow-hidden bg-slate-950 font-mono text-xs flex-1 min-h-[300px]">
-            <textarea
+          <div className="relative border border-border/40 rounded-xl overflow-hidden bg-slate-950 flex-1 min-h-[300px]">
+            <Editor
+              height="100%"
+              language={selectedLang === 'c' || selectedLang === 'cpp' ? 'cpp' : selectedLang}
               value={code}
-              onChange={(e) => handleCodeChange(e.target.value)}
-              className="w-full h-full min-h-[300px] bg-transparent text-slate-200 p-4 resize-none border-none outline-none focus:ring-0 leading-relaxed font-mono"
-              spellCheck="false"
-              placeholder="// Write code here..."
+              theme="vs-dark"
+              onChange={(value) => handleCodeChange(value || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: 'monospace',
+                lineHeight: 24,
+                padding: { top: 16 },
+                scrollBeyondLastLine: false,
+                smoothScrolling: true,
+                cursorBlinking: 'smooth',
+                cursorSmoothCaretAnimation: 'on',
+                formatOnPaste: true,
+              }}
             />
           </div>
 

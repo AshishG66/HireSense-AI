@@ -15,6 +15,12 @@ import {
   Component,
   ChevronLeft,
   ChevronRight,
+  Code,
+  FileCheck,
+  Bookmark,
+  FileEdit,
+  Activity,
+  ClipboardList,
 } from 'lucide-react';
 import useAuthStore from '../../stores/useAuthStore';
 
@@ -35,8 +41,12 @@ export default function Sidebar({ isCollapsed, toggleCollapse, className = '' }:
         return [
           { name: 'Dashboard', href: '/', icon: LayoutDashboard },
           { name: 'Resume Analysis', href: '/candidate/resume-analysis', icon: Sparkles },
+          { name: 'Resume Builder', href: '/candidate/resume-builder', icon: FileEdit },
           { name: 'ATS Score', href: '/candidate/ats-score', icon: TrendingUp },
           { name: 'Mock Interview', href: '/candidate/mock-interview', icon: Video },
+          { name: 'Coding Assessment', href: '/candidate/assessments', icon: Code },
+          { name: 'Applications', href: '/candidate/applications', icon: FileCheck },
+          { name: 'Saved Jobs', href: '/candidate/saved-jobs', icon: Bookmark },
           { name: 'Profile', href: '/candidate/profile', icon: User },
           { name: 'Settings', href: '/candidate/settings', icon: Settings },
         ];
@@ -45,8 +55,11 @@ export default function Sidebar({ isCollapsed, toggleCollapse, className = '' }:
           { name: 'Dashboard', href: '/', icon: LayoutDashboard },
           { name: 'Jobs', href: '/recruiter/jobs', icon: Briefcase },
           { name: 'Candidates', href: '/recruiter/candidates', icon: Users },
+          { name: 'Coding Assessments', href: '/recruiter/assessments', icon: Code },
+          { name: 'Interview Reports', href: '/recruiter/interview-reports', icon: ClipboardList },
           { name: 'Analytics', href: '/recruiter/analytics', icon: BarChart3 },
           { name: 'Company Profile', href: '/recruiter/company-profile', icon: Building2 },
+          { name: 'Settings', href: '/recruiter/settings', icon: Settings },
         ];
       case 'ADMIN':
         return [
@@ -55,17 +68,16 @@ export default function Sidebar({ isCollapsed, toggleCollapse, className = '' }:
           { name: 'Platform Analytics', href: '/admin/platform-analytics', icon: BarChart3 },
           { name: 'AI Usage', href: '/admin/ai-usage', icon: Cpu },
           { name: 'Audit Logs', href: '/admin/audit-logs', icon: History },
+          { name: 'Monitoring', href: '/admin/monitoring', icon: Activity },
+          { name: 'Architecture', href: '/architecture', icon: Cpu },
+          { name: 'Design System', href: '/design-system', icon: Component },
         ];
       default:
         return [{ name: 'Dashboard', href: '/', icon: LayoutDashboard }];
     }
   };
 
-  const navItems = [
-    ...getNavItems(),
-    { name: 'Architecture', href: '/architecture', icon: Cpu },
-    { name: 'Design System', href: '/design-system', icon: Component },
-  ];
+  const navItems = getNavItems();
 
   return (
     <aside

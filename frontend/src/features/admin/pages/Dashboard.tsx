@@ -1,8 +1,32 @@
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/organisms/Card';
-import { Shield, Cpu, Users, History } from 'lucide-react';
+import { Shield, Cpu, Users, Activity } from 'lucide-react';
 import ChartsContainer from '@/components/organisms/ChartsContainer';
+import api from '../../../utils/api';
 
 export default function AdminDashboard() {
+  const [metrics, setMetrics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const response = await api.get('/monitoring/metrics');
+        setMetrics(response.data.data);
+      } catch (err) {
+        console.error('Failed to fetch metrics:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 10000); // refresh every 10s
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading && !metrics) {
+    return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading dashboard...</div>;
+  }
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <div>
@@ -24,47 +48,47 @@ export default function AdminDashboard() {
             <Users className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-extrabold font-display">1,402</p>
-            <p className="text-xs text-muted-foreground mt-1">42 registered today</p>
+            <p className="text-3xl font-extrabold font-display">{metrics?.users?.total || 1}</p>
+            <p className="text-xs text-muted-foreground mt-1">Platform-wide access</p>
           </CardContent>
         </Card>
 
         <Card className="bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              AI Tokens Used
+              AI Total Calls
             </h3>
             <Cpu className="w-4 h-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-extrabold font-display">2.4M</p>
-            <p className="text-xs text-muted-foreground mt-1">82% of current monthly quota</p>
+            <p className="text-3xl font-extrabold font-display">{metrics?.ai?.totalCalls || 0}</p>
+            <p className="text-xs text-muted-foreground mt-1">{metrics?.ai?.successRate || 100}% success rate</p>
           </CardContent>
         </Card>
 
         <Card className="bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Audit Triggers
+              Avg API Latency
             </h3>
-            <History className="w-4 h-4 text-emerald-500" />
+            <Activity className="w-4 h-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-extrabold font-display">34</p>
-            <p className="text-xs text-muted-foreground mt-1">0 critical exceptions logged</p>
+            <p className="text-3xl font-extrabold font-display">{metrics?.app?.averageLatencyMs || 0}ms</p>
+            <p className="text-xs text-muted-foreground mt-1">across {metrics?.app?.totalRequests || 0} recent requests</p>
           </CardContent>
         </Card>
 
         <Card className="bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Security Status
+              Database Status
             </h3>
-            <Shield className="w-4 h-4 text-amber-500" />
+            <Shield className={`w-4 h-4 ${metrics?.database?.status === 'healthy' ? 'text-emerald-500' : 'text-amber-500'}`} />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-extrabold font-display">Normal</p>
-            <p className="text-xs text-muted-foreground mt-1">SSL certificates active</p>
+            <p className="text-3xl font-extrabold font-display capitalize">{metrics?.database?.status || 'Unknown'}</p>
+            <p className="text-xs text-muted-foreground mt-1">{metrics?.database?.queryLatencyMs || 0}ms ping</p>
           </CardContent>
         </Card>
       </div>

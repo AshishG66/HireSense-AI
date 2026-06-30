@@ -31,6 +31,7 @@ const AdminUserManagement = lazy(() => import('../features/admin/pages/UserManag
 const AdminPlatformAnalytics = lazy(() => import('../features/admin/pages/PlatformAnalytics'));
 const AdminAIUsage = lazy(() => import('../features/admin/pages/AIUsage'));
 const AdminAuditLogs = lazy(() => import('../features/admin/pages/AuditLogs'));
+const AdminMonitoring = lazy(() => import('../features/admin/pages/Monitoring'));
 
 // Lazy Loaded design system page
 const Showroom = lazy(() => import('../features/design-system/Showroom'));
@@ -85,6 +86,7 @@ export default function AppRoutes() {
           <Route path="admin/platform-analytics" element={<AdminPlatformAnalytics />} />
           <Route path="admin/ai-usage" element={<AdminAIUsage />} />
           <Route path="admin/audit-logs" element={<AdminAuditLogs />} />
+          <Route path="admin/monitoring" element={<AdminMonitoring />} />
 
           {/* Showroom design components paths */}
           <Route path="design-system" element={<Showroom />} />
