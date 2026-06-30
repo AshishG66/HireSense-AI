@@ -1,4 +1,7 @@
 import logger from '../lib/logger';
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 import {
   JudgeProvider,
   ExecutionResult,
@@ -6,71 +9,60 @@ import {
   SubmissionResult,
 } from '../interfaces/judge.interface';
 
-export class MockJudgeProvider implements JudgeProvider {
+export class LocalJudgeProvider implements JudgeProvider {
   async execute(code: string, languageCode: string, input: string): Promise<ExecutionResult> {
-    logger.info(`MockJudge: Executing code for ${languageCode}`);
+    logger.info(`LocalJudge: Executing code for ${languageCode}`);
+    
+    try {
+      const cleanInput = input.trim();
+      let output = '';
+      const start = Date.now();
 
-    if (languageCode === 'javascript') {
-      try {
-        const cleanInput = input.trim();
-        const wrapped = `
-          const solve = (inputStr) => {
-            ${code}
-          };
-          solve(${JSON.stringify(cleanInput)});
+      if (languageCode === 'javascript' || languageCode === 'js') {
+        const script = `
+          const inputStr = ${JSON.stringify(cleanInput)};
+          ${code}
         `;
-        const result = eval(wrapped);
-        return {
-          status: 'PASSED',
-          stdout: 'Code executed successfully.',
-          actualOutput: String(result).trim(),
-          runtime: 45,
-          memory: 1024,
-        };
-      } catch (err: any) {
-        return {
+        output = execSync(`node -e ${JSON.stringify(script)}`, { encoding: 'utf-8', timeout: 5000 });
+      } else if (languageCode === 'python' || languageCode === 'py') {
+        const scriptPath = path.join(__dirname, '..', '..', 'temp_script.py');
+        const scriptContent = `
+import sys
+import json
+input_str = ${JSON.stringify(cleanInput)}
+${code}
+`;
+        fs.writeFileSync(scriptPath, scriptContent);
+        output = execSync(`python3 ${scriptPath}`, { encoding: 'utf-8', timeout: 5000 });
+        fs.unlinkSync(scriptPath);
+      } else {
+         return {
           status: 'COMPILE_ERROR',
-          stderr: err.message,
-          runtime: 10,
-          memory: 100,
+          stderr: 'Language not supported by local judge.',
+          runtime: 0,
+          memory: 0,
         };
       }
-    }
 
-    const syntaxError = code.includes('syntax_error') || code.includes('SyntaxError');
-    if (syntaxError) {
+      return {
+        status: 'PASSED',
+        stdout: output,
+        actualOutput: output.trim(),
+        runtime: Date.now() - start,
+        memory: 1024,
+      };
+    } catch (err: any) {
       return {
         status: 'COMPILE_ERROR',
-        stderr: 'Compilation failed: Syntax error near line 4.',
-        runtime: 12,
-        memory: 200,
+        stderr: err.stderr ? err.stderr.toString() : err.message,
+        runtime: 10,
+        memory: 100,
       };
     }
-
-    const cleanInput = input.trim();
-    let actualOutput = cleanInput;
-
-    if (code.includes('def twoSum') || code.includes('twoSum') || code.includes('class Solution')) {
-      if (cleanInput.includes('2,7,11,15') && cleanInput.includes('9')) {
-        actualOutput = '[0,1]';
-      } else {
-        actualOutput = '[0,1]';
-      }
-    } else if (code.includes('def isPalindrome') || code.includes('isPalindrome')) {
-      actualOutput = cleanInput === '121' ? 'true' : 'false';
-    }
-
-    return {
-      status: 'PASSED',
-      stdout: 'Standard output printed.',
-      actualOutput: actualOutput,
-      runtime: 55,
-      memory: 2048,
-    };
   }
 
   async submit(code: string, languageCode: string, testCases: TestCaseItem[]): Promise<SubmissionResult> {
-    logger.info(`MockJudge: Grading submission with ${testCases.length} test cases`);
+    logger.info(`LocalJudge: Grading submission with ${testCases.length} test cases`);
     const executions: SubmissionResult['executions'] = [];
     let passedCount = 0;
 
@@ -85,15 +77,15 @@ export class MockJudgeProvider implements JudgeProvider {
       executions.push({
         testCaseId: tc.id,
         status: isPassed ? 'PASSED' : 'FAILED',
-        runtime: exec.runtime,
-        memory: exec.memory,
+        runtime: exec.runtime || 0,
+        memory: exec.memory || 0,
         stdout: exec.stdout,
         stderr: exec.stderr,
         actualOutput: exec.actualOutput,
       });
     }
 
-    const hasCompileError = executions.some((e) => e.stderr && !e.actualOutput);
+    const hasCompileError = executions.some((e) => e.status === 'FAILED' && e.stderr);
     const scorePercentage = Math.round((passedCount / testCases.length) * 100);
 
     return {
@@ -114,7 +106,7 @@ export class JudgeService {
   private activeProvider: JudgeProvider;
 
   constructor() {
-    this.activeProvider = new MockJudgeProvider();
+    this.activeProvider = new LocalJudgeProvider();
   }
 
   async execute(code: string, languageCode: string, input: string): Promise<ExecutionResult> {

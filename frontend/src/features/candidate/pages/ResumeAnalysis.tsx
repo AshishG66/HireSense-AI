@@ -76,8 +76,8 @@ export default function ResumeAnalysis() {
   useEffect(() => {
     fetchResumes();
 
-    const state = useAuthStore.getState() as any;
-    const token = state.token || localStorage.getItem('token');
+    const state = useAuthStore.getState();
+    const token = state.accessToken;
     if (!token) return;
 
     const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';

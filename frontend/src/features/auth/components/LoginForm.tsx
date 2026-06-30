@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/Button';
@@ -14,6 +15,7 @@ const loginSchema = z.object({
 type LoginSchemaType = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -26,8 +28,11 @@ export default function LoginForm() {
     try {
       const response = await api.post('/auth/login', data);
       const user = response.data.data.user;
+      const accessToken = response.data.data.accessToken;
+      const refreshToken = response.data.data.refreshToken;
       const login = useAuthStore.getState().login;
-      login(user);
+      login(user, accessToken, refreshToken);
+      navigate('/');
     } catch (error: any) {
       console.error('Login failed', error);
       alert(error.message || 'Login failed. Please try again.');
@@ -51,6 +56,13 @@ export default function LoginForm() {
       <Button type="submit" variant="primary" isLoading={isSubmitting} className="w-full">
         Sign In
       </Button>
+      
+      <p className="text-sm text-center text-muted-foreground mt-4">
+        Don't have an account?{' '}
+        <Link to="/register" className="text-primary hover:underline">
+          Sign Up
+        </Link>
+      </p>
     </form>
   );
 }

@@ -12,10 +12,15 @@ export const api = axios.create({
   },
 });
 
-// We rely on HttpOnly cookies rather than Bearer tokens,
-// so no request interceptor is needed to append Authorization headers.
+// We use HttpOnly cookies but also attach Bearer token as a fallback for strict cross-site cookie environments.
 api.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    const token = useAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
   (error) => Promise.reject(error),
 );
 
@@ -67,8 +72,16 @@ api.interceptors.response.use(
 
       try {
         // Ping the refresh endpoint to obtain new cookies
-        await api.post('/auth/refresh');
+        const currentRefreshToken = useAuthStore.getState().refreshToken;
+        const res = await api.post('/auth/refresh', { refreshToken: currentRefreshToken });
         
+        if (res.data?.data?.accessToken) {
+          useAuthStore.getState().setAccessToken(res.data.data.accessToken);
+        }
+        if (res.data?.data?.refreshToken) {
+          useAuthStore.getState().setRefreshToken(res.data.data.refreshToken);
+        }
+
         processQueue(null);
         isRefreshing = false;
 

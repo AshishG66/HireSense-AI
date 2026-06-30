@@ -14,13 +14,10 @@ class GeminiClient:
         """
         Submits prompt content to Gemini API and harvests response texts.
         """
-        try:
-            response = self.client.models.generate_content(
-                model=model,
-                contents=prompt,
-            )
-            return response.text
-        except Exception as e:
-            return f"Fallback: Error communicating with Gemini API: {str(e)}"
+        response = self.client.models.generate_content(
+            model=model,
+            contents=prompt,
+        )
+        return response.text
 
 gemini_client = GeminiClient()

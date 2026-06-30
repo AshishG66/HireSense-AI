@@ -34,7 +34,7 @@ export class AuthController {
     res.cookie('accessToken', result.accessToken, accessCookieOptions);
     res.cookie('refreshToken', result.refreshToken, refreshCookieOptions);
 
-    return res.json(ApiResponse.success({ user: result.user }, 'Login successful'));
+    return res.json(ApiResponse.success({ user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken }, 'Login successful'));
   }
 
   async logout(req: Request, res: Response) {
@@ -60,7 +60,7 @@ export class AuthController {
     res.cookie('accessToken', result.accessToken, accessCookieOptions);
     res.cookie('refreshToken', result.refreshToken, refreshCookieOptions);
 
-    return res.json(ApiResponse.success({}, 'Tokens refreshed successfully'));
+    return res.json(ApiResponse.success({ accessToken: result.accessToken, refreshToken: result.refreshToken }, 'Tokens refreshed successfully'));
   }
 
   async verifyEmail(req: Request, res: Response) {

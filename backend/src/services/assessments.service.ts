@@ -101,15 +101,7 @@ export class AssessmentsService {
         hard: { solved: hardSolved, total: hardTotal },
       },
       submissionHistory: submissions.slice(0, 10),
-      upcomingAssessments: [
-        {
-          id: 'test-1',
-          title: 'Google Screening Round 1',
-          duration: 60,
-          questionsCount: 2,
-          difficulty: 'MEDIUM',
-        },
-      ],
+      upcomingAssessments: [],
     };
   }
 

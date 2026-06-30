@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import useAuthStore from '../stores/useAuthStore';
-import { LoginForm } from '../features/auth';
+import { LoginForm, RegisterForm } from '../features/auth';
 
 // Lazy Loaded Candidate Portal Pages
 const CandidateDashboard = lazy(() => import('../features/candidate/pages/Dashboard'));
@@ -65,6 +65,7 @@ export default function AppRoutes() {
     <Suspense fallback={<div className="p-8 text-center text-muted-foreground font-semibold">Loading page components...</div>}>
       <Routes>
         <Route path="/login" element={<div className="flex min-h-screen items-center justify-center bg-background"><div className="w-full max-w-md p-8 bg-card border border-border/40 rounded-2xl shadow-xl"><h1 className="text-2xl font-display font-bold text-foreground mb-6 text-center">Sign In</h1><LoginForm /></div></div>} />
+        <Route path="/register" element={<div className="flex min-h-screen items-center justify-center bg-background"><div className="w-full max-w-md p-8 bg-card border border-border/40 rounded-2xl shadow-xl"><h1 className="text-2xl font-display font-bold text-foreground mb-6 text-center">Create Account</h1><RegisterForm /></div></div>} />
         <Route path="/" element={<DashboardLayout />}>
           {/* Dynamic workspace role home */}
           <Route index element={<DashboardSwitcher />} />

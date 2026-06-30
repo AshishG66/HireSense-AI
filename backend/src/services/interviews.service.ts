@@ -48,35 +48,14 @@ export class InterviewsService {
 
     // 3. Call FastAPI to generate structured questions list
     let questions: { question_text: string; expected_criteria: string; question_type: string }[] = [];
-    try {
-      const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/questions`, {
-        resume_text: resumeText,
-        job_description: `Role profile at ${data.companyName} as ${data.jobRole}`,
-        difficulty: data.difficulty,
-        interview_type: data.interviewType,
-        previous_history: historySummary,
-      });
-      questions = response.data.questions;
-    } catch (err: any) {
-      logger.error(`AI questions generation failed: ${err.message}. Falling back to default questions.`);
-      questions = [
-        {
-          question_text: 'How do you manage complex asynchronous operations in a React and Redux project?',
-          expected_criteria: 'Mention RTK Query, async/await error catching, and caching patterns.',
-          question_type: 'TECHNICAL',
-        },
-        {
-          question_text: 'What are the key differences between client-side rendering (CSR) and server-side rendering (SSR)?',
-          expected_criteria: 'Explain page speeds, SEO indexing capabilities, server loads, and Hydration concepts.',
-          question_type: 'TECHNICAL',
-        },
-        {
-          question_text: 'Describe a time when you had a technical disagreement with a team member. How did you resolve it?',
-          expected_criteria: 'Collaboration skills, benchmark reviews, active listening, and consensus building.',
-          question_type: 'BEHAVIORAL',
-        },
-      ];
-    }
+    const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/questions`, {
+      resume_text: resumeText,
+      job_description: `Role profile at ${data.companyName} as ${data.jobRole}`,
+      difficulty: data.difficulty,
+      interview_type: data.interviewType,
+      previous_history: historySummary,
+    });
+    questions = response.data.questions;
 
     // 4. Register session in database
     const session = await interviewsRepository.createSession({
@@ -142,28 +121,13 @@ export class InterviewsService {
     // 3. Evaluate answer using FastAPI grading service
     logger.info(`Evaluating answer ${savedAnswer.id} against criteria: "${question.expectedCriteria}"`);
     let evaluation;
-    try {
-      const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/evaluate`, {
-        question: question.questionText,
-        expected_criteria: question.expectedCriteria || '',
-        student_answer: transcript,
-        difficulty: session.difficulty || 'MEDIUM',
-      });
-      evaluation = response.data;
-    } catch (err: any) {
-      logger.error(`Grader evaluate failed: ${err.message}. Using fallback evaluation.`);
-      evaluation = {
-        technical_accuracy: 8.0,
-        communication: 8.0,
-        problem_solving: 8.0,
-        confidence: 8.0,
-        completeness: 8.0,
-        grammar: 9.0,
-        overall_score: 8.0,
-        feedback: 'Answer evaluated. Concept explained reasonably well.',
-        suggestions: ['Quantify performance achievements.'],
-      };
-    }
+    const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/evaluate`, {
+      question: question.questionText,
+      expected_criteria: question.expectedCriteria || '',
+      student_answer: transcript,
+      difficulty: session.difficulty || 'MEDIUM',
+    });
+    evaluation = response.data;
 
     // 4. Save AI grades back to database
     await interviewsRepository.updateAnswerEvaluation(savedAnswer.id, {
@@ -211,26 +175,10 @@ export class InterviewsService {
     // 2. Request synthesized executive report from FastAPI
     logger.info(`Compiling final mock interview report for session ${sessionId}`);
     let report;
-    try {
-      const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/report`, {
-        answers,
-      });
-      report = response.data;
-    } catch (err: any) {
-      logger.error(`Report generation failed: ${err.message}. Compiling local metrics.`);
-      const avgScore = answers.reduce((sum, a) => sum + (a?.overall_score || 0), 0) / answers.length;
-      report = {
-        overall_score: avgScore * 10,
-        technical_score: avgScore * 10,
-        behavioral_score: avgScore * 10,
-        communication_score: avgScore * 10,
-        strengths: ['Addressed coding questions well.'],
-        weaknesses: ['Add more examples during behavioral scenarios.'],
-        learning_resources: ['React documentation: https://react.dev'],
-        suggested_projects: ['Build portfolio hooks.'],
-        next_difficulty: 'MEDIUM',
-      };
-    }
+    const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/report`, {
+      answers,
+    });
+    report = response.data;
 
     // 3. Update session report in database
     return interviewsRepository.updateSessionStatus(sessionId, {
