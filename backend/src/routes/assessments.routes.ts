@@ -31,7 +31,7 @@ router.get(
 router.get(
   '/candidate/questions',
   authenticate,
-  roleGuard([ROLES.CANDIDATE]),
+  roleGuard([ROLES.CANDIDATE, ROLES.RECRUITER]),
   asyncHandler(assessmentsController.getQuestions),
 );
 
@@ -44,6 +44,7 @@ router.get(
 router.get(
   '/languages',
   authenticate,
+  roleGuard([ROLES.CANDIDATE, ROLES.RECRUITER]),
   asyncHandler(assessmentsController.getLanguages),
 );
 

@@ -10,6 +10,16 @@ from app.features.analyzer.schemas import (
     ProjectItem,
 )
 
+def clean_json(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
 class AnalyzerService:
     async def analyze_resume(self, data: ResumeAnalysisRequest) -> ResumeAnalysisResponse:
         """
@@ -49,7 +59,7 @@ class AnalyzerService:
             }
         ).text
 
-        parsed = json.loads(raw_text)
+        parsed = json.loads(clean_json(raw_text))
         
         # Map education, experience, and projects arrays to Pydantic models
         education_list = [EducationItem(**item) for item in parsed.get("education", [])]

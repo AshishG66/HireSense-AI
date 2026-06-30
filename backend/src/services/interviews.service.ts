@@ -1,6 +1,6 @@
 import axios from 'axios';
 import logger from '../lib/logger';
-import { NotFoundError, ForbiddenError, ValidationError } from '../utils/AppError';
+import { NotFoundError, ForbiddenError, ValidationError, InternalServerError } from '../utils/AppError';
 import interviewsRepository from '../repositories/interviews.repository';
 import resumesRepository from '../repositories/resumes.repository';
 import usersRepository from '../repositories/users.repository';
@@ -48,14 +48,19 @@ export class InterviewsService {
 
     // 3. Call FastAPI to generate structured questions list
     let questions: { question_text: string; expected_criteria: string; question_type: string }[] = [];
-    const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/questions`, {
-      resume_text: resumeText,
-      job_description: `Role profile at ${data.companyName} as ${data.jobRole}`,
-      difficulty: data.difficulty,
-      interview_type: data.interviewType,
-      previous_history: historySummary,
-    });
-    questions = response.data.questions;
+    try {
+      const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/questions`, {
+        resume_text: resumeText,
+        job_description: `Role profile at ${data.companyName} as ${data.jobRole}`,
+        difficulty: data.difficulty,
+        interview_type: data.interviewType,
+        previous_history: historySummary,
+      });
+      questions = response.data.questions;
+    } catch (err: any) {
+      logger.error(`AI Service error: ${err.message}`);
+      throw new InternalServerError(`Failed to generate interview questions: ${err.response?.data?.detail || err.message}`);
+    }
 
     // 4. Register session in database
     const session = await interviewsRepository.createSession({
@@ -121,13 +126,18 @@ export class InterviewsService {
     // 3. Evaluate answer using FastAPI grading service
     logger.info(`Evaluating answer ${savedAnswer.id} against criteria: "${question.expectedCriteria}"`);
     let evaluation;
-    const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/evaluate`, {
-      question: question.questionText,
-      expected_criteria: question.expectedCriteria || '',
-      student_answer: transcript,
-      difficulty: session.difficulty || 'MEDIUM',
-    });
-    evaluation = response.data;
+    try {
+      const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/evaluate`, {
+        question: question.questionText,
+        expected_criteria: question.expectedCriteria || '',
+        student_answer: transcript,
+        difficulty: session.difficulty || 'MEDIUM',
+      });
+      evaluation = response.data;
+    } catch (err: any) {
+      logger.error(`AI Service error: ${err.message}`);
+      throw new InternalServerError(`Failed to evaluate answer: ${err.response?.data?.detail || err.message}`);
+    }
 
     // 4. Save AI grades back to database
     await interviewsRepository.updateAnswerEvaluation(savedAnswer.id, {
@@ -175,10 +185,15 @@ export class InterviewsService {
     // 2. Request synthesized executive report from FastAPI
     logger.info(`Compiling final mock interview report for session ${sessionId}`);
     let report;
-    const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/report`, {
-      answers,
-    });
-    report = response.data;
+    try {
+      const response = await axios.post(`${this.aiServiceUrl}/api/v1/interview/report`, {
+        answers,
+      });
+      report = response.data;
+    } catch (err: any) {
+      logger.error(`AI Service error: ${err.message}`);
+      throw new InternalServerError(`Failed to compile interview report: ${err.response?.data?.detail || err.message}`);
+    }
 
     // 3. Update session report in database
     return interviewsRepository.updateSessionStatus(sessionId, {

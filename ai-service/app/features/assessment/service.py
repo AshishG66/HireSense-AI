@@ -3,6 +3,16 @@ from app.config import settings
 from app.core.gemini import gemini_client
 from app.features.assessment.schemas import CodeReviewRequest, CodeReviewResponse
 
+def clean_json(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
 class AssessmentService:
     async def review_code(self, data: CodeReviewRequest) -> CodeReviewResponse:
 
@@ -44,7 +54,7 @@ class AssessmentService:
             }
         ).text
 
-        parsed = json.loads(raw_text)
+        parsed = json.loads(clean_json(raw_text))
         return CodeReviewResponse(
             time_complexity=parsed.get("time_complexity", "O(N)"),
             space_complexity=parsed.get("space_complexity", "O(N)"),

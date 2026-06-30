@@ -106,7 +106,7 @@ export class AssessmentsService {
   }
 
   async getQuestions(userId: string) {
-    await this.getCandidateProfile(userId);
+    // Both Recruiters and Candidates can view questions
     await assessmentsRepository.ensureDefaultQuestions();
     return assessmentsRepository.findAllQuestions();
   }

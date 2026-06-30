@@ -68,9 +68,9 @@ export default function RecruiterInterviewReports() {
   const filtered = sessions
     .filter((s) => {
       const matchSearch =
-        s.candidateProfile?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
-        s.candidateProfile?.lastName?.toLowerCase().includes(search.toLowerCase()) ||
-        s.jobRole?.toLowerCase().includes(search.toLowerCase());
+        s.candidateProfile?.firstName?.toLowerCase()?.includes(search.toLowerCase()) ||
+        s.candidateProfile?.lastName?.toLowerCase()?.includes(search.toLowerCase()) ||
+        s.jobRole?.toLowerCase()?.includes(search.toLowerCase());
       const matchRole = selectedRole === 'ALL' || s.jobRole === selectedRole;
       return matchSearch && matchRole;
     })

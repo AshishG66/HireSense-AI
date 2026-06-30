@@ -12,6 +12,16 @@ from app.features.interview.schemas import (
     AnswerDetail,
 )
 
+def clean_json(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
 class InterviewService:
     async def generate_questions(self, data: InterviewGenerationRequest) -> InterviewGenerationResponse:
 
@@ -44,7 +54,7 @@ class InterviewService:
             }
         ).text
 
-        parsed = json.loads(raw_text)
+        parsed = json.loads(clean_json(raw_text))
         questions_list = [QuestionItem(**item) for item in parsed.get("questions", [])]
         return InterviewGenerationResponse(questions=questions_list)
 
@@ -87,7 +97,7 @@ class InterviewService:
             }
         ).text
 
-        parsed = json.loads(raw_text)
+        parsed = json.loads(clean_json(raw_text))
         return AnswerEvaluationResponse(
             technical_accuracy=float(parsed.get("technical_accuracy", 7.0)),
             communication=float(parsed.get("communication", 7.0)),
@@ -134,7 +144,7 @@ class InterviewService:
             }
         ).text
 
-        parsed = json.loads(raw_text)
+        parsed = json.loads(clean_json(raw_text))
         return ReportGenerationResponse(
             overall_score=float(parsed.get("overall_score", 75.0)),
             technical_score=float(parsed.get("technical_score", 75.0)),
