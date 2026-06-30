@@ -15,6 +15,8 @@ const ResumeDetails = lazy(() => import('../features/candidate/pages/ResumeDetai
 const ResumeComparison = lazy(() => import('../features/candidate/pages/ResumeComparison'));
 const CandidateAssessments = lazy(() => import('../features/candidate/pages/CandidateAssessments'));
 const CodingWorkspace = lazy(() => import('../features/candidate/pages/CodingWorkspace'));
+const SavedJobs = lazy(() => import('../features/candidate/pages/SavedJobs'));
+const Applications = lazy(() => import('../features/candidate/pages/Applications'));
 
 // Lazy Loaded Recruiter Portal Pages
 const RecruiterDashboard = lazy(() => import('../features/recruiter/pages/Dashboard'));
@@ -72,6 +74,8 @@ export default function AppRoutes() {
           <Route path="candidate/settings" element={<CandidateSettings />} />
           <Route path="candidate/assessments" element={<CandidateAssessments />} />
           <Route path="candidate/assessments/workspace/:id" element={<CodingWorkspace />} />
+          <Route path="candidate/saved-jobs" element={<SavedJobs />} />
+          <Route path="candidate/applications" element={<Applications />} />
 
           {/* Recruiter Portal paths */}
           <Route path="recruiter/jobs" element={<RecruiterJobs />} />

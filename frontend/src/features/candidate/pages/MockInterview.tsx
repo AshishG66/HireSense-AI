@@ -332,6 +332,12 @@ export default function MockInterview() {
         </div>
       </div>
 
+      {!activeQuestion ? (
+        <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-slate-800">
+          <h3 className="text-xl font-bold">No Questions Found</h3>
+          <p className="text-slate-400 mt-2">Failed to load or generate questions for this interview session.</p>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Workspace Card */}
         <div className="lg:col-span-2 space-y-6">
@@ -485,6 +491,7 @@ export default function MockInterview() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

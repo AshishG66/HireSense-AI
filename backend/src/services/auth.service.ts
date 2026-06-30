@@ -46,7 +46,6 @@ export class AuthService {
         role: updatedUser.role.name,
         isEmailVerified: updatedUser.isEmailVerified,
       },
-      verificationToken,
     };
   }
 
@@ -146,7 +145,7 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await usersRepository.findByEmail(email);
     if (!user) {
-      return { resetToken: null };
+      return { message: 'If the email exists, a reset token has been issued.' };
     }
 
     const resetPasswordToken = crypto.randomBytes(32).toString('hex');
@@ -158,7 +157,7 @@ export class AuthService {
       resetPasswordExpires,
     });
 
-    return { resetToken: resetPasswordToken };
+    return { message: 'If the email exists, a reset token has been issued.' };
   }
 
   async resetPassword(data: ResetPasswordInput['body']) {

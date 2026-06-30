@@ -1,9 +1,53 @@
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/organisms/Card';
 import { Badge } from '@/components/atoms/Badge';
 import { Briefcase, Users, FileCheck2, TrendingUp } from 'lucide-react';
 import ChartsContainer from '@/components/organisms/ChartsContainer';
+import api from '../../../utils/api';
 
 export default function RecruiterDashboard() {
+  const [stats, setStats] = useState({
+    activePostings: 0,
+    totalApplicants: 0,
+    screeningsDone: 0,
+    avgMatchScore: 0,
+  });
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [jobsRes, reportsRes] = await Promise.all([
+          api.get('/jobs'),
+          api.get('/interviews/recruiter/reports'),
+        ]);
+
+        const jobs = jobsRes.data.data || [];
+        const reports = reportsRes.data.data || [];
+
+        const activePostings = jobs.filter((j: any) => j.status === 'ACTIVE').length;
+        
+        let totalApplicants = 0;
+        jobs.forEach((j: any) => {
+          totalApplicants += (j.applications?.length || 0);
+        });
+
+        const screeningsDone = reports.length;
+        const avgMatchScore = screeningsDone > 0 
+          ? Math.round(reports.reduce((sum: number, r: any) => sum + (r.score || 0), 0) / screeningsDone)
+          : 0;
+
+        setStats({
+          activePostings,
+          totalApplicants,
+          screeningsDone,
+          avgMatchScore,
+        });
+      } catch (error) {
+        console.error("Failed to load recruiter dashboard stats", error);
+      }
+    };
+    fetchDashboardData();
+  }, []);
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <div>
@@ -25,8 +69,8 @@ export default function RecruiterDashboard() {
             <Briefcase className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-extrabold font-display">8</p>
-            <p className="text-xs text-muted-foreground mt-1">+2 postings published this month</p>
+            <p className="text-3xl font-extrabold font-display">{stats.activePostings}</p>
+            <p className="text-xs text-muted-foreground mt-1">Live job postings</p>
           </CardContent>
         </Card>
 
@@ -38,8 +82,8 @@ export default function RecruiterDashboard() {
             <Users className="w-4 h-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-extrabold font-display">342</p>
-            <p className="text-xs text-muted-foreground mt-1">14 pending initial AI screen</p>
+            <p className="text-3xl font-extrabold font-display">{stats.totalApplicants}</p>
+            <p className="text-xs text-muted-foreground mt-1">Total application pipeline</p>
           </CardContent>
         </Card>
 
@@ -51,8 +95,8 @@ export default function RecruiterDashboard() {
             <FileCheck2 className="w-4 h-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-extrabold font-display">184</p>
-            <p className="text-xs text-muted-foreground mt-1">Avg candidate match score: 76%</p>
+            <p className="text-3xl font-extrabold font-display">{stats.screeningsDone}</p>
+            <p className="text-xs text-muted-foreground mt-1">Avg candidate match score: {stats.avgMatchScore}%</p>
           </CardContent>
         </Card>
 

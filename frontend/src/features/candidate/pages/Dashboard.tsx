@@ -23,6 +23,7 @@ export default function CandidateDashboard() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [savedJobs, setSavedJobs] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
+  const [atsScore, setAtsScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -36,7 +37,7 @@ export default function CandidateDashboard() {
   const fetchCandidateData = async () => {
     try {
       setLoading(true);
-      const [jobsRes, savedRes, appsRes] = await Promise.all([
+      const [jobsRes, savedRes, appsRes, resumesRes] = await Promise.all([
         api.get('/jobs', {
           params: {
             search: searchTerm || undefined,
@@ -45,11 +46,25 @@ export default function CandidateDashboard() {
         }),
         api.get('/jobs/saved'),
         api.get('/applications'),
+        api.get('/resumes'),
       ]);
 
       setJobs(jobsRes.data.data || []);
       setSavedJobs(savedRes.data.data || []);
       setApplications(appsRes.data.data || []);
+
+      // Calculate max ATS score across all resume versions
+      let maxScore = 0;
+      const resumes = resumesRes.data.data || [];
+      resumes.forEach((r: any) => {
+        r.versions?.forEach((v: any) => {
+          if (v.analysis?.matchScore && v.analysis.matchScore > maxScore) {
+            maxScore = v.analysis.matchScore;
+          }
+        });
+      });
+      setAtsScore(maxScore > 0 ? Math.round(maxScore) : null);
+
       setError('');
     } catch (err: any) {
       setError(err.message || 'Unable to retrieve Candidate dashboard context');
@@ -159,9 +174,9 @@ export default function CandidateDashboard() {
             <Trophy className="w-4 h-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-extrabold font-display">84%</p>
+            <p className="text-4xl font-extrabold font-display">{atsScore !== null ? `${atsScore}%` : 'N/A'}</p>
             <p className="text-xs text-emerald-400 mt-1.5 font-bold">
-              Excellent Resume Match Matrix
+              {atsScore !== null ? 'Highest Resume Match' : 'Upload Resume to calculate'}
             </p>
           </CardContent>
         </Card>
