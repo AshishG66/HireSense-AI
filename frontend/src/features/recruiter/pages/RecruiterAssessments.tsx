@@ -122,6 +122,16 @@ export default function RecruiterAssessments() {
     }
   };
 
+  const handlePublishTest = async (id: string) => {
+    try {
+      await api.patch(`/assessments/tests/${id}`, { visibility: 'PUBLIC' });
+      triggerToast('Assessment published successfully.');
+      fetchTestsAndQuestions();
+    } catch (err: any) {
+      triggerToast('Publish failed: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(link);
     triggerToast('Invite link copied to clipboard!');
@@ -224,6 +234,15 @@ export default function RecruiterAssessments() {
                 )}
 
                 <div className="flex justify-end gap-2 border-t border-border/30 pt-3">
+                  {test.visibility !== 'PUBLIC' && (
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePublishTest(test.id)}
+                      className="text-emerald-500 hover:bg-emerald-500/5 hover:border-emerald-500/30"
+                    >
+                      Publish
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     onClick={() => handleDeleteTest(test.id)}

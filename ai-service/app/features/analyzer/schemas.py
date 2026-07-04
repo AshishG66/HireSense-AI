@@ -70,3 +70,15 @@ class ResumeAnalysisResponse(BaseModel):
     formatting_issues: List[str] = Field(default_factory=list, description="Formatting issues found (e.g. complex layouts, columns, margins)")
     grammar_issues: List[str] = Field(default_factory=list, description="Grammar and spelling issues detected")
 
+
+class ResumeBuilderRequest(BaseModel):
+    raw_profile_data: str = Field(..., description="Details of raw candidate education, skills, and experience to structure")
+    target_role: Optional[str] = Field(None, description="The target role or job title to optimize for")
+
+
+class ResumeBuilderResponse(BaseModel):
+    suggested_summary: str = Field(..., description="Polished professional summary paragraph")
+    formatted_experience: List[ExperienceItem] = Field(default_factory=list, description="Polished work experience listings with bullet points")
+    formatted_education: List[EducationItem] = Field(default_factory=list, description="Structured education details")
+    suggested_skills: List[str] = Field(default_factory=list, description="Polished, grouped, or categorized list of skills")
+

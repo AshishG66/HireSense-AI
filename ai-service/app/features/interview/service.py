@@ -44,19 +44,12 @@ class InterviewService:
         Provide the output in structured JSON matching the expected schema.
         """
 
-        raw_text = gemini_client.client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": InterviewGenerationResponse,
-                "temperature": 0.2
-            }
-        ).text
-
-        parsed = json.loads(clean_json(raw_text))
-        questions_list = [QuestionItem(**item) for item in parsed.get("questions", [])]
-        return InterviewGenerationResponse(questions=questions_list)
+        result = await gemini_client.generate_structured(
+            prompt=prompt,
+            response_schema=InterviewGenerationResponse,
+            temperature=0.2
+        )
+        return result
 
     async def evaluate_answer(self, data: AnswerEvaluationRequest) -> AnswerEvaluationResponse:
 
@@ -87,28 +80,12 @@ class InterviewService:
         Provide the output in structured JSON matching the expected schema.
         """
 
-        raw_text = gemini_client.client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": AnswerEvaluationResponse,
-                "temperature": 0.1
-            }
-        ).text
-
-        parsed = json.loads(clean_json(raw_text))
-        return AnswerEvaluationResponse(
-            technical_accuracy=float(parsed.get("technical_accuracy", 7.0)),
-            communication=float(parsed.get("communication", 7.0)),
-            problem_solving=float(parsed.get("problem_solving", 7.0)),
-            confidence=float(parsed.get("confidence", 7.0)),
-            completeness=float(parsed.get("completeness", 7.0)),
-            grammar=float(parsed.get("grammar", 7.0)),
-            overall_score=float(parsed.get("overall_score", 7.0)),
-            feedback=parsed.get("feedback", "Answer parsed successfully."),
-            suggestions=parsed.get("suggestions", [])
+        result = await gemini_client.generate_structured(
+            prompt=prompt,
+            response_schema=AnswerEvaluationResponse,
+            temperature=0.1
         )
+        return result
 
     async def generate_report(self, data: ReportGenerationRequest) -> ReportGenerationResponse:
 
@@ -134,28 +111,12 @@ class InterviewService:
         Provide the output in structured JSON matching the expected schema.
         """
 
-        raw_text = gemini_client.client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": ReportGenerationResponse,
-                "temperature": 0.2
-            }
-        ).text
-
-        parsed = json.loads(clean_json(raw_text))
-        return ReportGenerationResponse(
-            overall_score=float(parsed.get("overall_score", 75.0)),
-            technical_score=float(parsed.get("technical_score", 75.0)),
-            behavioral_score=float(parsed.get("behavioral_score", 75.0)),
-            communication_score=float(parsed.get("communication_score", 75.0)),
-            strengths=parsed.get("strengths", []),
-            weaknesses=parsed.get("weaknesses", []),
-            learning_resources=parsed.get("learning_resources", []),
-            suggested_projects=parsed.get("suggested_projects", []),
-            next_difficulty=parsed.get("next_difficulty", "MEDIUM")
+        result = await gemini_client.generate_structured(
+            prompt=prompt,
+            response_schema=ReportGenerationResponse,
+            temperature=0.2
         )
+        return result
 
 
 interview_service = InterviewService()

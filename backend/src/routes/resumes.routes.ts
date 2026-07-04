@@ -115,4 +115,11 @@ router.get(
   asyncHandler(resumesController.getJobStatus),
 );
 
+router.post(
+  '/build',
+  authenticate,
+  roleGuard([ROLES.CANDIDATE]),
+  asyncHandler(resumesController.buildResume),
+);
+
 export default router;

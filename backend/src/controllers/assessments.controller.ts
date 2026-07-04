@@ -74,6 +74,22 @@ export class AssessmentsController {
     const submitResult = await assessmentsService.submitCode(userId, questionId, code, languageCode, codingTestId);
     return res.json(ApiResponse.success(submitResult, 'Solution submitted and graded against test cases'));
   }
+
+  async updateTest(req: Request, res: Response) {
+    const userId = req.user?.userId;
+    if (!userId) throw new UnauthorizedError('Unauthorized');
+
+    const test = await assessmentsService.updateTest(userId, req.params.id, req.body);
+    return res.json(ApiResponse.success(test, 'Coding test challenge updated successfully'));
+  }
+
+  async deleteTest(req: Request, res: Response) {
+    const userId = req.user?.userId;
+    if (!userId) throw new UnauthorizedError('Unauthorized');
+
+    await assessmentsService.deleteTest(userId, req.params.id);
+    return res.json(ApiResponse.success(null, 'Coding test challenge deleted successfully'));
+  }
 }
 
 export const assessmentsController = new AssessmentsController();

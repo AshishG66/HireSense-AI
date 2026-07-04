@@ -103,6 +103,17 @@ export class ResumesController {
     res.setHeader('Content-Type', mimeType);
     return res.send(buffer);
   }
+
+  async buildResume(req: Request, res: Response) {
+    const userId = req.user?.userId;
+    if (!userId) throw new UnauthorizedError('Unauthorized');
+
+    const { rawProfileData, targetRole } = req.body;
+    if (!rawProfileData) throw new ValidationError('Raw profile text data is required');
+
+    const result = await resumesService.buildResume(userId, rawProfileData, targetRole);
+    return res.json(ApiResponse.success(result, 'Resume generated successfully'));
+  }
 }
 
 export const resumesController = new ResumesController();

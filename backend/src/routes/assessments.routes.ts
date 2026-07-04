@@ -21,6 +21,20 @@ router.get(
   asyncHandler(assessmentsController.getTests),
 );
 
+router.patch(
+  '/tests/:id',
+  authenticate,
+  roleGuard([ROLES.RECRUITER]),
+  asyncHandler(assessmentsController.updateTest),
+);
+
+router.delete(
+  '/tests/:id',
+  authenticate,
+  roleGuard([ROLES.RECRUITER]),
+  asyncHandler(assessmentsController.deleteTest),
+);
+
 router.get(
   '/candidate/dashboard',
   authenticate,

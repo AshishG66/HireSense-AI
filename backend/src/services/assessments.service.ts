@@ -91,6 +91,24 @@ export class AssessmentsService {
       submissions.map((s) => new Date(s.createdAt).toDateString()),
     );
 
+    // Fetch tests that are PUBLIC, where the candidate has not submitted yet
+    const upcomingTests = await prisma.codingTest.findMany({
+      where: {
+        deletedAt: null,
+        visibility: 'PUBLIC',
+      },
+      include: {
+        questions: true,
+      },
+    });
+
+    const upcomingAssessments = upcomingTests.map((t) => ({
+      id: t.id,
+      title: t.title,
+      duration: t.duration,
+      questionsCount: t.questions.length,
+    }));
+
     return {
       problemsSolved: solvedQuestions.size,
       acceptanceRate,
@@ -101,7 +119,7 @@ export class AssessmentsService {
         hard: { solved: hardSolved, total: hardTotal },
       },
       submissionHistory: submissions.slice(0, 10),
-      upcomingAssessments: [],
+      upcomingAssessments,
     };
   }
 
@@ -229,6 +247,43 @@ export class AssessmentsService {
     } catch (err: any) {
       logger.error(`AI background review query failed: ${err.message}`);
     }
+  }
+
+  async updateTest(
+    userId: string,
+    testId: string,
+    data: {
+      title?: string;
+      description?: string;
+      duration?: number;
+      passingScore?: number;
+      visibility?: string;
+      negativeMarking?: boolean;
+      randomQuestionOrder?: boolean;
+      allowedLanguages?: string[];
+    },
+  ) {
+    const recruiter = await this.getRecruiterProfile(userId);
+    const test = await assessmentsRepository.findTestById(testId);
+    if (!test) {
+      throw new NotFoundError('Coding test not found');
+    }
+    if (test.recruiterProfileId !== recruiter.id) {
+      throw new ForbiddenError('You do not have permission to modify this test');
+    }
+    return assessmentsRepository.updateTest(testId, data);
+  }
+
+  async deleteTest(userId: string, testId: string) {
+    const recruiter = await this.getRecruiterProfile(userId);
+    const test = await assessmentsRepository.findTestById(testId);
+    if (!test) {
+      throw new NotFoundError('Coding test not found');
+    }
+    if (test.recruiterProfileId !== recruiter.id) {
+      throw new ForbiddenError('You do not have permission to delete this test');
+    }
+    return assessmentsRepository.deleteTest(testId);
   }
 }
 

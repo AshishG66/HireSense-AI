@@ -3,16 +3,6 @@ from app.config import settings
 from app.core.gemini import gemini_client
 from app.features.assessment.schemas import CodeReviewRequest, CodeReviewResponse
 
-def clean_json(text: str) -> str:
-    text = text.strip()
-    if text.startswith("```json"):
-        text = text[7:]
-    elif text.startswith("```"):
-        text = text[3:]
-    if text.endswith("```"):
-        text = text[:-3]
-    return text.strip()
-
 class AssessmentService:
     async def review_code(self, data: CodeReviewRequest) -> CodeReviewResponse:
 
@@ -44,27 +34,12 @@ class AssessmentService:
         Provide the output in structured JSON matching the expected schema.
         """
 
-        raw_text = gemini_client.client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": CodeReviewResponse,
-                "temperature": 0.2
-            }
-        ).text
-
-        parsed = json.loads(clean_json(raw_text))
-        return CodeReviewResponse(
-            time_complexity=parsed.get("time_complexity", "O(N)"),
-            space_complexity=parsed.get("space_complexity", "O(N)"),
-            alternative_approach=parsed.get("alternative_approach", "Use index mapping to search in single loops."),
-            code_quality=int(parsed.get("code_quality", 8)),
-            naming_suggestions=parsed.get("naming_suggestions", []),
-            edge_cases_missed=parsed.get("edge_cases_missed", []),
-            optimization_suggestions=parsed.get("optimization_suggestions", []),
-            interview_feedback=parsed.get("interview_feedback", "Overall solid solution attempt.")
+        result = await gemini_client.generate_structured(
+            prompt=prompt,
+            response_schema=CodeReviewResponse,
+            temperature=0.2
         )
+        return result
 
 
 assessment_service = AssessmentService()

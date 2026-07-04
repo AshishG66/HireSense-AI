@@ -1,8 +1,10 @@
-import { NotFoundError, ForbiddenError } from '../utils/AppError';
+import { NotFoundError, ForbiddenError, InternalServerError } from '../utils/AppError';
 import resumesRepository from '../repositories/resumes.repository';
 import usersRepository from '../repositories/users.repository';
 import storageService from './storage.service';
 import queueService from './queue.service';
+import axios from 'axios';
+import config from '../config/env';
 
 const DEFAULT_JD = 'General Professional Software Engineer Profile Optimization and Evaluation';
 
@@ -175,6 +177,19 @@ export class ResumesService {
       fileName: version.fileName,
       mimeType: version.mimeType || 'application/pdf',
     };
+  }
+
+  async buildResume(userId: string, rawProfileData: string, targetRole?: string) {
+    await this.getCandidateProfile(userId);
+    try {
+      const response = await axios.post(`${config.AI_SERVICE_URL || 'http://localhost:8000'}/api/v1/analyzer/builder`, {
+        raw_profile_data: rawProfileData,
+        target_role: targetRole,
+      });
+      return response.data;
+    } catch (err: any) {
+      throw new InternalServerError(`Failed to build resume: ${err.response?.data?.detail || err.message}`);
+    }
   }
 }
 
