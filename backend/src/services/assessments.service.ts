@@ -42,13 +42,49 @@ export class AssessmentsService {
       randomQuestionOrder: boolean;
       allowedLanguages: string[];
       questions?: { codingQuestionId: string; orderIndex: number }[];
+      selectionMode?: 'FIXED' | 'RANDOM' | 'MIXED';
+      randomCount?: number;
     },
   ) {
     const recruiter = await this.getRecruiterProfile(userId);
     await assessmentsRepository.ensureDefaultQuestions();
 
+    let finalQuestions = data.questions || [];
+    const mode = data.selectionMode || 'FIXED';
+    const countToPick = data.randomCount || 3;
+
+    if (mode === 'RANDOM' || mode === 'MIXED') {
+      const allQs = await assessmentsRepository.findAllQuestions();
+      const existingIds = new Set(finalQuestions.map((q) => q.codingQuestionId));
+      const remainingQs = allQs.filter((q) => !existingIds.has(q.id));
+      
+      // Shuffle remaining
+      for (let i = remainingQs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [remainingQs[i], remainingQs[j]] = [remainingQs[j], remainingQs[i]];
+      }
+
+      const picked = remainingQs.slice(0, countToPick);
+      
+      const startIdx = finalQuestions.length;
+      picked.forEach((q, idx) => {
+        finalQuestions.push({
+          codingQuestionId: q.id,
+          orderIndex: startIdx + idx + 1,
+        });
+      });
+    }
+
     const test = await assessmentsRepository.createTest({
-      ...data,
+      title: data.title,
+      description: data.description,
+      duration: data.duration,
+      passingScore: data.passingScore,
+      visibility: data.visibility,
+      negativeMarking: data.negativeMarking,
+      randomQuestionOrder: data.randomQuestionOrder,
+      allowedLanguages: data.allowedLanguages,
+      questions: finalQuestions,
       recruiterProfileId: recruiter.id,
     });
 

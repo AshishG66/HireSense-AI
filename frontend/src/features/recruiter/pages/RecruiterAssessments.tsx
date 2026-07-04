@@ -41,6 +41,8 @@ export default function RecruiterAssessments() {
   const [randomQuestionOrder, setRandomQuestionOrder] = useState(false);
   const [allowedLangs, setAllowedLangs] = useState<string[]>(['javascript', 'python']);
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'FIXED' | 'RANDOM' | 'MIXED'>('FIXED');
+  const [randomCount, setRandomCount] = useState('3');
 
   // Toast
   const [toastMsg, setToastMsg] = useState('');
@@ -74,7 +76,7 @@ export default function RecruiterAssessments() {
   const handleCreateTest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    if (selectedQuestions.length === 0) {
+    if (selectionMode !== 'RANDOM' && selectedQuestions.length === 0) {
       triggerToast('Please select at least 1 question from the problem bank.');
       return;
     }
@@ -94,7 +96,9 @@ export default function RecruiterAssessments() {
         negativeMarking,
         randomQuestionOrder,
         allowedLanguages: allowedLangs,
-        questions: questionsPayload,
+        questions: selectionMode === 'RANDOM' ? [] : questionsPayload,
+        selectionMode,
+        randomCount: selectionMode !== 'FIXED' ? parseInt(randomCount) : undefined,
       });
 
       triggerToast('Coding assessment test created successfully!');
@@ -104,6 +108,8 @@ export default function RecruiterAssessments() {
       setTitle('');
       setDescription('');
       setSelectedQuestions([]);
+      setSelectionMode('FIXED');
+      setRandomCount('3');
       
       fetchTestsAndQuestions();
     } catch (err: any) {
@@ -326,6 +332,39 @@ export default function RecruiterAssessments() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                {/* Question Selection Mode */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Question Selection Mode
+                  </label>
+                  <select
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary font-sans"
+                    value={selectionMode}
+                    onChange={(e) => setSelectionMode(e.target.value as any)}
+                  >
+                    <option value="FIXED">Fixed Manual Selection</option>
+                    <option value="RANDOM">Fully Random Selection</option>
+                    <option value="MIXED">Mixed Selection Mode</option>
+                  </select>
+                </div>
+
+                {/* Random Questions Count */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Random Question Count
+                  </label>
+                  <Input
+                    type="number"
+                    value={randomCount}
+                    onChange={(e) => setRandomCount(e.target.value)}
+                    disabled={selectionMode === 'FIXED'}
+                    min="1"
+                    max="20"
+                  />
+                </div>
+              </div>
+
               {/* Language Selection checkboxes */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -370,43 +409,45 @@ export default function RecruiterAssessments() {
               </div>
 
               {/* Problem Selection checklist table */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Select Question Bank Problems ({selectedQuestions.length} selected)
-                </label>
-                <div className="border border-border/30 rounded-xl overflow-hidden divide-y divide-border/30 max-h-[150px] overflow-y-auto">
-                  {questions.map((q) => (
-                    <div key={q.id} className="flex items-center justify-between p-3.5 bg-slate-950/40">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <input
-                          type="checkbox"
-                          checked={selectedQuestions.includes(q.id)}
-                          onChange={() => toggleQuestion(q.id)}
-                          className="w-4 h-4 rounded border-slate-800 text-primary bg-slate-950"
-                        />
-                        <span className="font-bold text-foreground truncate max-w-[200px]">{q.title}</span>
+              {selectionMode !== 'RANDOM' && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Select Question Bank Problems ({selectedQuestions.length} selected)
+                  </label>
+                  <div className="border border-border/30 rounded-xl overflow-hidden divide-y divide-border/30 max-h-[150px] overflow-y-auto">
+                    {questions.map((q) => (
+                      <div key={q.id} className="flex items-center justify-between p-3.5 bg-slate-950/40">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={selectedQuestions.includes(q.id)}
+                            onChange={() => toggleQuestion(q.id)}
+                            className="w-4 h-4 rounded border-slate-800 text-primary bg-slate-950"
+                          />
+                          <span className="font-bold text-foreground truncate max-w-[200px]">{q.title}</span>
+                        </div>
+                        <Badge
+                          variant={
+                            q.difficulty === 'HARD'
+                              ? 'destructive'
+                              : q.difficulty === 'MEDIUM'
+                              ? 'warning'
+                              : 'success'
+                          }
+                        >
+                          {q.difficulty}
+                        </Badge>
                       </div>
-                      <Badge
-                        variant={
-                          q.difficulty === 'HARD'
-                            ? 'destructive'
-                            : q.difficulty === 'MEDIUM'
-                            ? 'warning'
-                            : 'success'
-                        }
-                      >
-                        {q.difficulty}
-                      </Badge>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex justify-end gap-2 border-t border-border/30 pt-4">
                 <Button variant="outline" type="button" onClick={() => setIsOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="primary" type="submit" disabled={selectedQuestions.length === 0}>
+                <Button variant="primary" type="submit" disabled={selectionMode !== 'RANDOM' && selectedQuestions.length === 0}>
                   Create & Launch Assessment
                 </Button>
               </div>

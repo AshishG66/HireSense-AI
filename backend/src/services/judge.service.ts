@@ -30,9 +30,43 @@ export class LocalJudgeProvider implements JudgeProvider {
     try {
       let runResult: any;
       let output = '';
-      const lang = languageCode.toLowerCase();
+      let lang = languageCode.toLowerCase();
+
+      // HEURISTIC AUTO-DETECTION to prevent incorrect routing (e.g. running Java code with Node.js)
+      if (code.includes('import java.') || code.includes('public class ') || code.includes('System.out.print')) {
+        lang = 'java';
+      } else if (code.includes('#include') && (code.includes('std::') || code.includes('cout') || code.includes('vector<') || code.includes('using namespace std'))) {
+        lang = 'cpp';
+      } else if (code.includes('#include <stdio.h>') || code.includes('printf(') || code.includes('malloc(')) {
+        if (!code.includes('cout') && !code.includes('using namespace std')) {
+          lang = 'c';
+        }
+      } else if ((code.includes('def ') && code.includes(':')) || code.includes('import sys') || (code.includes('print(') && !code.includes('console.log') && !code.includes('public class') && !code.includes('function '))) {
+        lang = 'python';
+      }
+
+      const checkCommand = (cmd: string): boolean => {
+        try {
+          const checkCmd = process.platform === 'win32' ? `${cmd}.exe` : cmd;
+          const res = spawnSync(checkCmd, ['--version'], { timeout: 1000 });
+          if (res.error && (res.error as any).code === 'ENOENT') {
+            return false;
+          }
+          return true;
+        } catch (e) {
+          return false;
+        }
+      };
 
       if (lang === 'javascript' || lang === 'js') {
+        if (!checkCommand('node')) {
+          return {
+            status: 'COMPILE_ERROR',
+            stderr: 'System Error: Node.js runtime is not installed on this machine.',
+            runtime: 0,
+            memory: 0,
+          };
+        }
         const scriptPath = path.join(runDir, 'index.js');
         const scriptContent = `
           const inputStr = ${JSON.stringify(cleanInput)};
@@ -47,6 +81,23 @@ export class LocalJudgeProvider implements JudgeProvider {
         runResult = spawnSync('node', ['index.js'], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
       } 
       else if (lang === 'typescript' || lang === 'ts') {
+        const tsxPath = path.join(process.cwd(), 'node_modules', 'tsx', 'dist', 'cli.mjs');
+        if (!fs.existsSync(tsxPath)) {
+          return {
+            status: 'COMPILE_ERROR',
+            stderr: 'System Error: TypeScript compiler (tsx) is not installed in project node_modules.',
+            runtime: 0,
+            memory: 0,
+          };
+        }
+        if (!checkCommand('node')) {
+          return {
+            status: 'COMPILE_ERROR',
+            stderr: 'System Error: Node.js runtime is not installed on this machine.',
+            runtime: 0,
+            memory: 0,
+          };
+        }
         const scriptPath = path.join(runDir, 'index.ts');
         const scriptContent = `
           const inputStr = ${JSON.stringify(cleanInput)};
@@ -58,10 +109,18 @@ export class LocalJudgeProvider implements JudgeProvider {
           }
         `;
         fs.writeFileSync(scriptPath, scriptContent);
-        const tsxPath = path.join(process.cwd(), 'node_modules', 'tsx', 'dist', 'cli.mjs');
         runResult = spawnSync('node', [tsxPath, 'index.ts'], { cwd: runDir, timeout: 7000, encoding: 'utf-8' });
       }
       else if (lang === 'python' || lang === 'py') {
+        const command = process.platform === 'win32' ? 'python' : 'python3';
+        if (!checkCommand(command) && !checkCommand('python')) {
+          return {
+            status: 'COMPILE_ERROR',
+            stderr: 'System Error: Python 3 runtime is not installed on this machine.',
+            runtime: 0,
+            memory: 0,
+          };
+        }
         if (code.trim() === 'def twoSum(nums, target):') {
           return {
             status: 'PASSED',
@@ -79,13 +138,28 @@ input_str = ${JSON.stringify(cleanInput)}
 ${code}
         `;
         fs.writeFileSync(scriptPath, scriptContent);
-        const command = process.platform === 'win32' ? 'python' : 'python3';
         runResult = spawnSync(command, ['index.py'], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
         if (runResult.error && (runResult.error as any).code === 'ENOENT' && command === 'python3') {
           runResult = spawnSync('python', ['index.py'], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
         }
       }
       else if (lang === 'java') {
+        if (!checkCommand('javac')) {
+          return {
+            status: 'COMPILE_ERROR',
+            stderr: 'System Error: Java compiler (javac) is not installed on this machine.',
+            runtime: 0,
+            memory: 0,
+          };
+        }
+        if (!checkCommand('java')) {
+          return {
+            status: 'COMPILE_ERROR',
+            stderr: 'System Error: Java runtime (java) is not installed on this machine.',
+            runtime: 0,
+            memory: 0,
+          };
+        }
         const hasClass = /class\s+\w+/.test(code);
         let className = 'Main';
         let javaCode = code;
@@ -117,6 +191,14 @@ ${code}
         runResult = spawnSync('java', [className], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
       }
       else if (lang === 'c') {
+        if (!checkCommand('gcc')) {
+          return {
+            status: 'COMPILE_ERROR',
+            stderr: 'System Error: C compiler (gcc) is not installed on this machine.',
+            runtime: 0,
+            memory: 0,
+          };
+        }
         const hasMain = /int\s+main\s*\(/.test(code);
         let cCode = code;
         if (!hasMain) {
@@ -147,6 +229,14 @@ ${code}
         runResult = spawnSync(binaryPath, [], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
       }
       else if (lang === 'cpp' || lang === 'c++') {
+        if (!checkCommand('g++') && !checkCommand('gcc')) {
+          return {
+            status: 'COMPILE_ERROR',
+            stderr: 'System Error: C++ compiler (g++) is not installed on this machine.',
+            runtime: 0,
+            memory: 0,
+          };
+        }
         const hasMain = /int\s+main\s*\(/.test(code);
         let cppCode = code;
         if (!hasMain) {
