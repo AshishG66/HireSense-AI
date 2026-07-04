@@ -46,7 +46,7 @@ int main(){cout<<"Hello";}
       if (res.stderr) {
         console.error(`Error: ${res.stderr}`);
       } else {
-        console.log(`Output: "${res.stdout.trim()}"`);
+        console.log(`Output: "${(res.stdout || '').trim()}"`);
       }
     } catch (e: any) {
       console.error(`[${t.name}] Unexpected error:`, e.message);
