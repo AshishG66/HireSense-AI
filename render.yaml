@@ -15,7 +15,7 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: AI_SERVICE_URL
-        sync: false
+        value: https://hiresense-ai-service.onrender.com
       - key: GEMINI_API_KEY
         sync: false
       - key: JWT_SECRET
