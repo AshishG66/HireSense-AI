@@ -284,28 +284,52 @@ export default function MockInterview() {
     setIsListening(false);
   };
 
+  const getGreetingName = (u: any): string => {
+    if (!u) return 'there';
+    
+    // 1. Name or Full Name
+    const fullName = u.name || u.fullName;
+    if (fullName && fullName.trim()) {
+      const first = fullName.trim().split(/\s+/)[0];
+      if (first) return first;
+    }
+
+    // 2. First name field
+    if (u.firstName && u.firstName.trim()) {
+      return u.firstName.trim();
+    }
+
+    // 3. Username field
+    if (u.username && u.username.trim()) {
+      return u.username.trim();
+    }
+
+    // 4. Email fallback (e.g. john@gmail.com -> John)
+    if (u.email && u.email.trim()) {
+      const prefix = u.email.trim().split('@')[0];
+      if (prefix) {
+        const cleanPrefix = prefix.split(/[._-]/)[0];
+        if (cleanPrefix) {
+          return cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
+        }
+        return prefix;
+      }
+    }
+
+    // 5. Role fallback
+    if (u.role) {
+      return u.role.toLowerCase();
+    }
+
+    return 'user';
+  };
+
   // Dynamic greeting and intro trigger on start
   useEffect(() => {
     let t: any;
     if (!wizardStep && session) {
-      const firstName = user?.name ? user.name.split(' ')[0] : (user?.firstName || '');
-      let greeting = 'Hello there.';
-      
-      if (user) {
-        if (firstName) {
-          greeting = `Hello, ${firstName}.`;
-        } else {
-          const uRole = user.role?.toUpperCase();
-          if (uRole === 'CANDIDATE') {
-            greeting = 'Hello, Candidate.';
-          } else if (uRole === 'RECRUITER') {
-            greeting = 'Hello, Recruiter.';
-          } else if (uRole === 'ADMIN') {
-            greeting = 'Hello, Admin.';
-          }
-        }
-      }
-
+      const greetingName = getGreetingName(user);
+      const greeting = `Hello, ${greetingName}.`;
       const intro = `Welcome to HireSense AI. Today's interview is for ${session.jobRole}. There will be ${session.questions?.length || 0} questions. Please answer clearly. Good luck.`;
       
       const fullGreetingText = `${greeting} ${intro}`;

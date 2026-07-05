@@ -50,8 +50,8 @@ export const UserMenu = ({ isOpen, onClose }: UserMenuProps) => {
   return (
     <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-3 duration-200">
       <div className="p-3 border-b border-border text-xs">
-        <p className="font-semibold text-foreground">{user?.name || 'Jane Doe'}</p>
-        <p className="text-muted-foreground/80">{user?.email || 'jane@example.com'}</p>
+        <p className="font-semibold text-foreground">{user?.name || user?.email?.split('@')[0] || 'User'}</p>
+        <p className="text-muted-foreground/80">{user?.email || ''}</p>
       </div>
       <div className="p-1 space-y-0.5 border-b border-border">
         <span className="block px-3 py-1.5 text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest select-none">

@@ -138,7 +138,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse, className = '' }:
         {!isCollapsed && (
           <div className="overflow-hidden animate-in fade-in duration-200">
             <p className="text-xs font-semibold text-slate-200 truncate">
-              {user?.name || 'John Doe'}
+              {user?.name || user?.email?.split('@')[0] || 'User'}
             </p>
             <p className="text-[10px] text-slate-500 truncate">{user?.role || 'Guest'}</p>
           </div>

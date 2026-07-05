@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, BrainCircuit, Component } from 'lucide-react';
+import useAuthStore from '../stores/useAuthStore';
 
 interface SidebarProps {
   className?: string;
@@ -7,6 +8,7 @@ interface SidebarProps {
 
 export default function Sidebar({ className = '' }: SidebarProps) {
   const location = useLocation();
+  const { user } = useAuthStore() as any;
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -49,14 +51,17 @@ export default function Sidebar({ className = '' }: SidebarProps) {
 
       {/* Profile Footer */}
       <div className="p-4 border-t border-slate-900 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-slate-900">
-          JD
+        <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-slate-900 shrink-0">
+          {user?.name ? user.name[0] : 'U'}
         </div>
-        <div>
-          <p className="text-sm font-semibold text-slate-200">John Doe</p>
-          <p className="text-xs text-slate-500">Recruiter Admin</p>
+        <div className="overflow-hidden">
+          <p className="text-sm font-semibold text-slate-200 truncate">
+            {user?.name || user?.email?.split('@')[0] || 'User'}
+          </p>
+          <p className="text-xs text-slate-500 truncate">{user?.role || 'Guest'}</p>
         </div>
       </div>
     </aside>
   );
 }
+
