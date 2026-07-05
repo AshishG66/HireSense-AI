@@ -806,6 +806,21 @@ function generateCRunner(signature: CSignature, inputStr: string): string {
     int res = ${signature.methodName}(${invocationArgs.join(', ')});
     printf("%d\\n", res);
     `;
+  } else if (retType === 'bool' || retType === '_Bool') {
+    outputSerialization = `
+    bool res = ${signature.methodName}(${invocationArgs.join(', ')});
+    printf("%s\\n", res ? "true" : "false");
+    `;
+  } else if (retType === 'double' || retType === 'float') {
+    outputSerialization = `
+    double res = ${signature.methodName}(${invocationArgs.join(', ')});
+    printf("%f\\n", res);
+    `;
+  } else if (retType === 'void') {
+    outputSerialization = `
+    ${signature.methodName}(${invocationArgs.join(', ')});
+    printf("void\\n");
+    `;
   } else {
     outputSerialization = `
     printf("%s\\n", ${signature.methodName}(${invocationArgs.join(', ')}));
@@ -816,6 +831,7 @@ function generateCRunner(signature: CSignature, inputStr: string): string {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 // ListNode definition
 #ifndef STRUCTS_H
@@ -1161,7 +1177,7 @@ function serializeTreeNode(root) {
 function parseArg(arg) {
     arg = arg.trim();
     if (arg.includes('->')) return parseListNode(arg);
-    if (arg.startsWith('[') && arg.endswith(']')) {
+    if (arg.startsWith('[') && arg.endsWith(']')) {
         if (arg.includes('null') || (arg.includes(',') && !arg.replace(/[\\\[\\\]\\s,-]|null/g, '').match(/^\\d+$/))) {
             return parseTreeNode(arg);
         }
@@ -1246,7 +1262,12 @@ export class LocalJudgeProvider implements JudgeProvider {
     const runDir = path.join(tempDir, `run_${runId}`);
     fs.mkdirSync(runDir, { recursive: true });
 
-    const cleanInput = input.trim();
+    // Normalize newlines, literal \n, CRLF to simple multiline LF
+    const normalizedInput = input
+      .replace(/\\n/g, '\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+    const cleanInput = normalizedInput.trim();
     const start = Date.now();
 
     try {
