@@ -3,8 +3,10 @@ import { Card, CardHeader, CardContent } from '@/components/organisms/Card';
 import { Shield, Cpu, Users, Activity } from 'lucide-react';
 import ChartsContainer from '@/components/organisms/ChartsContainer';
 import api from '../../../utils/api';
+import useAuthStore from '../../../stores/useAuthStore';
 
 export default function AdminDashboard() {
+  const { user } = useAuthStore() as any;
   const [metrics, setMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,11 +29,15 @@ export default function AdminDashboard() {
   if (loading && !metrics) {
     return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading dashboard...</div>;
   }
+
+  const firstName = user?.name ? user.name.split(' ')[0] : '';
+  const greeting = firstName ? `Hello, ${firstName}` : 'Hello, Admin';
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <div>
         <h1 className="text-3xl font-extrabold font-display text-foreground mb-1.5">
-          Admin Control Workspace
+          {greeting}
         </h1>
         <p className="text-muted-foreground text-sm">
           Monitor platform resource consumption, token rates, user lists, and audit trails.

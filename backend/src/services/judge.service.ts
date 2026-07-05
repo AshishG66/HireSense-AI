@@ -30,19 +30,33 @@ export class LocalJudgeProvider implements JudgeProvider {
     try {
       let runResult: any;
       let output = '';
-      let lang = languageCode.toLowerCase();
+      let lang = languageCode ? languageCode.toLowerCase() : '';
 
       // HEURISTIC AUTO-DETECTION to prevent incorrect routing (e.g. running Java code with Node.js)
-      if (code.includes('import java.') || code.includes('public class ') || code.includes('System.out.print')) {
-        lang = 'java';
+      let detectedHeuristic = '';
+      if (code.includes('import java.') || code.includes('public class ') || code.includes('System.out.print') || (code.includes('class Solution') && code.includes('public int[]'))) {
+        detectedHeuristic = 'java';
       } else if (code.includes('#include') && (code.includes('std::') || code.includes('cout') || code.includes('vector<') || code.includes('using namespace std'))) {
-        lang = 'cpp';
+        detectedHeuristic = 'cpp';
       } else if (code.includes('#include <stdio.h>') || code.includes('printf(') || code.includes('malloc(')) {
         if (!code.includes('cout') && !code.includes('using namespace std')) {
-          lang = 'c';
+          detectedHeuristic = 'c';
         }
       } else if ((code.includes('def ') && code.includes(':')) || code.includes('import sys') || (code.includes('print(') && !code.includes('console.log') && !code.includes('public class') && !code.includes('function '))) {
-        lang = 'python';
+        detectedHeuristic = 'python';
+      } else if (code.includes('console.log') || code.includes('let ') || code.includes('const ') || code.includes('function ')) {
+        if (code.includes(': number') || code.includes(': string') || code.includes(': any')) {
+          detectedHeuristic = 'typescript';
+        } else {
+          detectedHeuristic = 'javascript';
+        }
+      }
+
+      // Confident heuristic takes priority, otherwise use the selected language Code
+      if (detectedHeuristic) {
+        lang = detectedHeuristic;
+      } else if (!lang) {
+        lang = 'javascript';
       }
 
       const checkCommand = (cmd: string): boolean => {
@@ -62,7 +76,7 @@ export class LocalJudgeProvider implements JudgeProvider {
         if (!checkCommand('node')) {
           return {
             status: 'COMPILE_ERROR',
-            stderr: 'System Error: Node.js runtime is not installed on this machine.',
+            stderr: 'Compiler not installed: Node.js runtime is not installed on this machine.',
             runtime: 0,
             memory: 0,
           };
@@ -85,7 +99,7 @@ export class LocalJudgeProvider implements JudgeProvider {
         if (!fs.existsSync(tsxPath)) {
           return {
             status: 'COMPILE_ERROR',
-            stderr: 'System Error: TypeScript compiler (tsx) is not installed in project node_modules.',
+            stderr: 'Compiler not installed: TypeScript compiler (tsx) is not installed in project node_modules.',
             runtime: 0,
             memory: 0,
           };
@@ -93,7 +107,7 @@ export class LocalJudgeProvider implements JudgeProvider {
         if (!checkCommand('node')) {
           return {
             status: 'COMPILE_ERROR',
-            stderr: 'System Error: Node.js runtime is not installed on this machine.',
+            stderr: 'Compiler not installed: Node.js runtime is not installed on this machine.',
             runtime: 0,
             memory: 0,
           };
@@ -116,7 +130,7 @@ export class LocalJudgeProvider implements JudgeProvider {
         if (!checkCommand(command) && !checkCommand('python')) {
           return {
             status: 'COMPILE_ERROR',
-            stderr: 'System Error: Python 3 runtime is not installed on this machine.',
+            stderr: 'Compiler not installed: Python 3 runtime is not installed on this machine.',
             runtime: 0,
             memory: 0,
           };
@@ -147,7 +161,7 @@ ${code}
         if (!checkCommand('javac')) {
           return {
             status: 'COMPILE_ERROR',
-            stderr: 'System Error: Java compiler (javac) is not installed on this machine.',
+            stderr: 'Compiler not installed: Java compiler (javac) is not installed on this machine.',
             runtime: 0,
             memory: 0,
           };
@@ -155,7 +169,7 @@ ${code}
         if (!checkCommand('java')) {
           return {
             status: 'COMPILE_ERROR',
-            stderr: 'System Error: Java runtime (java) is not installed on this machine.',
+            stderr: 'Compiler not installed: Java runtime (java) is not installed on this machine.',
             runtime: 0,
             memory: 0,
           };
@@ -194,7 +208,7 @@ ${code}
         if (!checkCommand('gcc')) {
           return {
             status: 'COMPILE_ERROR',
-            stderr: 'System Error: C compiler (gcc) is not installed on this machine.',
+            stderr: 'Compiler not installed: C compiler (gcc) is not installed on this machine.',
             runtime: 0,
             memory: 0,
           };
@@ -232,7 +246,7 @@ ${code}
         if (!checkCommand('g++') && !checkCommand('gcc')) {
           return {
             status: 'COMPILE_ERROR',
-            stderr: 'System Error: C++ compiler (g++) is not installed on this machine.',
+            stderr: 'Compiler not installed: C++ compiler (g++) is not installed on this machine.',
             runtime: 0,
             memory: 0,
           };

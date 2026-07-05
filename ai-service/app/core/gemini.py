@@ -163,11 +163,11 @@ class GeminiClient:
                 model=model,
                 contents=prompt,
             )
-            logger.info("Gemini succeeded: request completed successfully")
+            logger.info("Gemini Success")
             return response.text
         except Exception as e:
-            logger.error(f"Gemini failed: {str(e)}")
-            logger.warning("Fallback activated: generating local mock text response")
+            logger.error("Gemini Failure")
+            logger.warning("Fallback Activated")
             return "Mock generated text content."
 
     async def generate_structured(
@@ -226,7 +226,7 @@ class GeminiClient:
                 # Validate JSON schema using Pydantic
                 parsed_json = json.loads(cleaned_text)
                 validated = response_schema.model_validate(parsed_json)
-                logger.info("Gemini succeeded: request completed successfully")
+                logger.info("Gemini Success")
                 return validated
 
             except asyncio.TimeoutError as e:
@@ -253,9 +253,8 @@ class GeminiClient:
                 await asyncio.sleep(sleep_time)
 
         # Fallback to generating mock data
-        error_msg = f"Gemini API request failed after {max_retries} attempts. Last error: {str(last_exception)}"
-        logger.error(f"Gemini failed: {error_msg}")
-        logger.warning(f"Fallback activated: generating local mock data for {response_schema.__name__}")
+        logger.error("Gemini Failure")
+        logger.warning("Fallback Activated")
         try:
             schema_name = response_schema.__name__
             if schema_name in STATIC_MOCK_RESPONSES:
@@ -263,7 +262,7 @@ class GeminiClient:
             return _generate_mock_pydantic(response_schema)
         except Exception as mock_err:
             logger.error(f"GeminiClient: Mock fallback generation failed: {str(mock_err)}")
-            raise Exception(error_msg)
+            return _generate_mock_pydantic(response_schema)
 
 def _generate_mock_value(field_annotation, field_name: str) -> Any:
     from typing import get_origin, get_args, Union, List

@@ -40,6 +40,13 @@ export const UserMenu = ({ isOpen, onClose }: UserMenuProps) => {
     onClose();
   };
 
+  const logout = useAuthStore((state: any) => state.logout);
+
+  const handleLogout = () => {
+    logout();
+    onClose();
+  };
+
   return (
     <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-3 duration-200">
       <div className="p-3 border-b border-border text-xs">
@@ -58,7 +65,7 @@ export const UserMenu = ({ isOpen, onClose }: UserMenuProps) => {
               onClick={() => handleRoleSwitch(r)}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs transition-colors ${
                 isActive
-                  ? 'bg-primary/10 text-primary font-bold'
+                   ? 'bg-primary/10 text-primary font-bold'
                   : 'text-foreground hover:bg-accent hover:text-accent-foreground'
               }`}
             >
@@ -70,7 +77,7 @@ export const UserMenu = ({ isOpen, onClose }: UserMenuProps) => {
       </div>
       <div className="p-1">
         <button
-          onClick={onClose}
+          onClick={handleLogout}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs text-destructive hover:bg-destructive/10 transition-colors"
         >
           <LogOut className="w-4 h-4" />

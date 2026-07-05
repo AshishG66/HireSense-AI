@@ -288,17 +288,21 @@ export default function MockInterview() {
   useEffect(() => {
     let t: any;
     if (!wizardStep && session) {
-      const uName = user ? (user.name || user.firstName || user.email?.split('@')[0] || user.role) : 'there';
-      let greeting = `Hello there.`;
+      const firstName = user?.name ? user.name.split(' ')[0] : (user?.firstName || '');
+      let greeting = 'Hello there.';
       
       if (user) {
-        const uRole = user.role?.toUpperCase();
-        if (uRole === 'CANDIDATE') {
-          greeting = `Hello ${uName}. Welcome to HireSense AI.`;
-        } else if (uRole === 'RECRUITER') {
-          greeting = `Hello ${uName}. Welcome back.`;
-        } else if (uRole === 'ADMIN') {
-          greeting = `Hello ${uName}. Welcome back to HireSense AI.`;
+        if (firstName) {
+          greeting = `Hello, ${firstName}.`;
+        } else {
+          const uRole = user.role?.toUpperCase();
+          if (uRole === 'CANDIDATE') {
+            greeting = 'Hello, Candidate.';
+          } else if (uRole === 'RECRUITER') {
+            greeting = 'Hello, Recruiter.';
+          } else if (uRole === 'ADMIN') {
+            greeting = 'Hello, Admin.';
+          }
         }
       }
 

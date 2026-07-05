@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, HelpCircle, Sun, Moon, Search } from 'lucide-react';
 import useThemeStore from '../../stores/useThemeStore';
+import useAuthStore from '../../stores/useAuthStore';
 import NotificationsPanel from './NotificationsPanel';
 import UserMenu from './UserMenu';
 import Breadcrumbs from '../molecules/Breadcrumbs';
@@ -13,6 +14,7 @@ interface NavbarProps {
 
 export default function Navbar({ onSearchClick, className = '' }: NavbarProps) {
   const { theme, toggleTheme } = useThemeStore();
+  const { user } = useAuthStore() as any;
   const [isNotifyOpen, setIsNotifyOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
@@ -41,6 +43,15 @@ export default function Navbar({ onSearchClick, className = '' }: NavbarProps) {
     const label = segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     return { label, href };
   });
+
+  const getInitials = () => {
+    if (!user?.name) return 'U';
+    const parts = user.name.split(' ').filter(Boolean);
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  };
 
   return (
     <header
@@ -107,7 +118,7 @@ export default function Navbar({ onSearchClick, className = '' }: NavbarProps) {
             className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-white text-xs hover:ring-2 hover:ring-ring transition-all shrink-0"
             aria-label="User profile settings"
           >
-            JD
+            {getInitials()}
           </button>
           <UserMenu isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
         </div>

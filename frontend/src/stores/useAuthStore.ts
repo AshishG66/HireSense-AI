@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import api from '../utils/api';
 
 interface User {
@@ -19,20 +20,40 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  accessToken: null,
-  refreshToken: null,
-  isAuthenticated: false,
-  login: (user, accessToken, refreshToken) => set({ user, accessToken: accessToken || null, refreshToken: refreshToken || null, isAuthenticated: true }),
-  setAccessToken: (token: string) => set({ accessToken: token }),
-  setRefreshToken: (token: string) => set({ refreshToken: token }),
-  logout: () => {
-    const rfToken = useAuthStore.getState().refreshToken;
-    api.post('/auth/logout', { refreshToken: rfToken }).catch(console.error).finally(() => {
-      set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
-    });
-  },
-}));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      login: (user, accessToken, refreshToken) =>
+        set({
+          user,
+          accessToken: accessToken || null,
+          refreshToken: refreshToken || null,
+          isAuthenticated: true,
+        }),
+      setAccessToken: (token: string) => set({ accessToken: token }),
+      setRefreshToken: (token: string) => set({ refreshToken: token }),
+      logout: () => {
+        const rfToken = useAuthStore.getState().refreshToken;
+        api
+          .post('/auth/logout', { refreshToken: rfToken })
+          .catch(console.error)
+          .finally(() => {
+            set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.replace('/login');
+          });
+      },
+    }),
+    {
+      name: 'hiresense-auth-store',
+    }
+  )
+);
 
 export default useAuthStore;
+

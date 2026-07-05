@@ -17,8 +17,10 @@ import {
   Trash2,
 } from 'lucide-react';
 import api from '../../../utils/api';
+import useAuthStore from '../../../stores/useAuthStore';
 
 export default function CandidateDashboard() {
+  const { user } = useAuthStore() as any;
   const [activeTab, setActiveTab] = useState('explore');
   const [jobs, setJobs] = useState<any[]>([]);
   const [savedJobs, setSavedJobs] = useState<any[]>([]);
@@ -138,6 +140,9 @@ export default function CandidateDashboard() {
     }
   };
 
+  const firstName = user?.name ? user.name.split(' ')[0] : '';
+  const greeting = firstName ? `Hello, ${firstName}` : 'Hello, Candidate';
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {showToast && (
@@ -149,7 +154,7 @@ export default function CandidateDashboard() {
       <div className="bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 border border-primary/10 rounded-2xl p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-1.5">
           <h1 className="text-3xl font-extrabold font-display text-foreground font-sans">
-            Welcome to your Dashboard
+            {greeting}
           </h1>
           <p className="text-muted-foreground text-sm max-w-lg">
             Track your ATS scores, manage active submissions, and explore personalized openings

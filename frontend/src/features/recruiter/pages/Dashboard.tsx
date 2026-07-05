@@ -4,8 +4,10 @@ import { Badge } from '@/components/atoms/Badge';
 import { Briefcase, Users, FileCheck2, TrendingUp } from 'lucide-react';
 import ChartsContainer from '@/components/organisms/ChartsContainer';
 import api from '../../../utils/api';
+import useAuthStore from '../../../stores/useAuthStore';
 
 export default function RecruiterDashboard() {
+  const { user } = useAuthStore() as any;
   const [stats, setStats] = useState({
     activePostings: 0,
     totalApplicants: 0,
@@ -48,11 +50,15 @@ export default function RecruiterDashboard() {
     };
     fetchDashboardData();
   }, []);
+
+  const firstName = user?.name ? user.name.split(' ')[0] : '';
+  const greeting = firstName ? `Hello, ${firstName}` : 'Hello, Recruiter';
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <div>
         <h1 className="text-3xl font-extrabold font-display text-foreground mb-1.5">
-          Recruiter Command Workspace
+          {greeting}
         </h1>
         <p className="text-muted-foreground text-sm">
           Monitor job posts, screen incoming candidates, and review automated AI matching indices.
