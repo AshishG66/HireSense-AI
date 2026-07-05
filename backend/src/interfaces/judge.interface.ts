@@ -5,6 +5,9 @@ export interface ExecutionResult {
   actualOutput?: string;
   runtime: number;
   memory: number;
+  success?: boolean;
+  language?: string;
+  error?: string;
 }
 
 export interface TestCaseItem {

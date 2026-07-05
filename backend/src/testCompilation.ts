@@ -5,28 +5,32 @@ async function testAll() {
 
   const javaCode = `
 public class Main {
- public static void main(String[] args){
-  System.out.println("Hello");
- }
+    public static void main(String[] args){
+        System.out.println("Hello Java");
+    }
 }
   `;
 
-  const pythonCode = `print("Hello")`;
+  const pythonCode = `print("Hello Python")`;
 
   const cCode = `
-#include<stdio.h>
-int main(){printf("Hello");}
+#include <stdio.h>
+int main(){
+    printf("Hello C");
+}
   `;
 
   const cppCode = `
-#include<iostream>
+#include <iostream>
 using namespace std;
-int main(){cout<<"Hello";}
+int main(){
+    cout<<"Hello C++";
+}
   `;
 
-  const jsCode = `console.log("Hello")`;
+  const jsCode = `console.log("Hello JS")`;
 
-  const tsCode = `console.log("Hello")`;
+  const tsCode = `console.log("Hello TS")`;
 
   const tests = [
     { name: 'Java', lang: 'java', code: javaCode },

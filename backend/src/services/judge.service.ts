@@ -77,6 +77,9 @@ export class LocalJudgeProvider implements JudgeProvider {
           return {
             status: 'COMPILE_ERROR',
             stderr: 'Compiler not installed: Node.js runtime is not installed on this machine.',
+            success: false,
+            language: lang,
+            error: 'Compiler not installed.',
             runtime: 0,
             memory: 0,
           };
@@ -100,6 +103,9 @@ export class LocalJudgeProvider implements JudgeProvider {
           return {
             status: 'COMPILE_ERROR',
             stderr: 'Compiler not installed: TypeScript compiler (tsx) is not installed in project node_modules.',
+            success: false,
+            language: lang,
+            error: 'Compiler not installed.',
             runtime: 0,
             memory: 0,
           };
@@ -108,6 +114,9 @@ export class LocalJudgeProvider implements JudgeProvider {
           return {
             status: 'COMPILE_ERROR',
             stderr: 'Compiler not installed: Node.js runtime is not installed on this machine.',
+            success: false,
+            language: lang,
+            error: 'Compiler not installed.',
             runtime: 0,
             memory: 0,
           };
@@ -131,6 +140,9 @@ export class LocalJudgeProvider implements JudgeProvider {
           return {
             status: 'COMPILE_ERROR',
             stderr: 'Compiler not installed: Python 3 runtime is not installed on this machine.',
+            success: false,
+            language: lang,
+            error: 'Compiler not installed.',
             runtime: 0,
             memory: 0,
           };
@@ -162,6 +174,9 @@ ${code}
           return {
             status: 'COMPILE_ERROR',
             stderr: 'Compiler not installed: Java compiler (javac) is not installed on this machine.',
+            success: false,
+            language: lang,
+            error: 'Compiler not installed.',
             runtime: 0,
             memory: 0,
           };
@@ -170,6 +185,9 @@ ${code}
           return {
             status: 'COMPILE_ERROR',
             stderr: 'Compiler not installed: Java runtime (java) is not installed on this machine.',
+            success: false,
+            language: lang,
+            error: 'Compiler not installed.',
             runtime: 0,
             memory: 0,
           };
@@ -209,6 +227,9 @@ ${code}
           return {
             status: 'COMPILE_ERROR',
             stderr: 'Compiler not installed: C compiler (gcc) is not installed on this machine.',
+            success: false,
+            language: lang,
+            error: 'Compiler not installed.',
             runtime: 0,
             memory: 0,
           };
@@ -247,6 +268,9 @@ ${code}
           return {
             status: 'COMPILE_ERROR',
             stderr: 'Compiler not installed: C++ compiler (g++) is not installed on this machine.',
+            success: false,
+            language: lang,
+            error: 'Compiler not installed.',
             runtime: 0,
             memory: 0,
           };

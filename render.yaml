@@ -2,11 +2,12 @@ services:
   # Node.js Express API Backend
   - type: web
     name: hiresense-backend
-    env: node
+    env: docker
     plan: starter
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
-    startCommand: npm run start
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    healthCheckPath: /api/v1/health
     envVars:
       - key: PORT
         value: 5000
