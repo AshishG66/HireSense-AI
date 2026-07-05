@@ -155,7 +155,7 @@ int main() {
       const execData = runRes.data.data;
       console.log(`[${item.label}] Status: ${execData.status}`);
       if (execData.stderr) {
-        console.error(`[${item.label}] Error output:`, execData.stderr);
+        console.error(`[${item.label}] Error output:\n${execData.stderr}`);
       }
       if (execData.stdout) {
         console.log(`[${item.label}] Console output: "${execData.stdout.trim()}"`);

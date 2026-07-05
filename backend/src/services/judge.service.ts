@@ -95,7 +95,7 @@ export class LocalJudgeProvider implements JudgeProvider {
           }
         `;
         fs.writeFileSync(scriptPath, scriptContent);
-        runResult = spawnSync('node', ['index.js'], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
+        runResult = spawnSync('node', ['index.js'], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
       } 
       else if (lang === 'typescript' || lang === 'ts') {
         const tsxPath = path.join(process.cwd(), 'node_modules', 'tsx', 'dist', 'cli.mjs');
@@ -132,7 +132,7 @@ export class LocalJudgeProvider implements JudgeProvider {
           }
         `;
         fs.writeFileSync(scriptPath, scriptContent);
-        runResult = spawnSync('node', [tsxPath, 'index.ts'], { cwd: runDir, timeout: 7000, encoding: 'utf-8' });
+        runResult = spawnSync('node', [tsxPath, 'index.ts'], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
       }
       else if (lang === 'python' || lang === 'py') {
         const command = process.platform === 'win32' ? 'python' : 'python3';
@@ -164,9 +164,9 @@ input_str = ${JSON.stringify(cleanInput)}
 ${code}
         `;
         fs.writeFileSync(scriptPath, scriptContent);
-        runResult = spawnSync(command, ['index.py'], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
+        runResult = spawnSync(command, ['index.py'], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
         if (runResult.error && (runResult.error as any).code === 'ENOENT' && command === 'python3') {
-          runResult = spawnSync('python', ['index.py'], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
+          runResult = spawnSync('python', ['index.py'], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
         }
       }
       else if (lang === 'java') {
@@ -211,16 +211,18 @@ ${code}
         const javaFile = path.join(runDir, `${className}.java`);
         fs.writeFileSync(javaFile, javaCode);
 
-        const compile = spawnSync('javac', [`${className}.java`], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
+        const compile = spawnSync('javac', [`${className}.java`], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
         if (compile.error || compile.status !== 0) {
+          const compileErrMsg = compile.error ? compile.error.message : (compile.stderr || 'Compilation failed');
+          logger.error(`Java compilation failed: ${compileErrMsg}`, compile.error);
           return {
             status: 'COMPILE_ERROR',
-            stderr: compile.error ? compile.error.message : (compile.stderr || 'Compilation failed'),
+            stderr: `Java compilation failed: ${compileErrMsg}\nExit Code: ${compile.status}\nSignal: ${compile.signal}\nSpawn Error: ${compile.error ? compile.error.message : 'none'}`,
             runtime: 0,
             memory: 0,
           };
         }
-        runResult = spawnSync('java', [className], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
+        runResult = spawnSync('java', [className], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
       }
       else if (lang === 'c') {
         if (!checkCommand('gcc')) {
@@ -251,17 +253,20 @@ ${code}
         const cFile = path.join(runDir, 'main.c');
         fs.writeFileSync(cFile, cCode);
 
-        const compile = spawnSync('gcc', ['main.c', '-o', 'main.exe'], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
+        const binaryName = process.platform === 'win32' ? 'main.exe' : 'main';
+        const compile = spawnSync('gcc', ['main.c', '-o', binaryName], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
         if (compile.error || compile.status !== 0) {
+          const compileErrMsg = compile.error ? compile.error.message : (compile.stderr || 'Compilation failed');
+          logger.error(`C compilation failed: ${compileErrMsg}`, compile.error);
           return {
             status: 'COMPILE_ERROR',
-            stderr: compile.error ? compile.error.message : (compile.stderr || 'Compilation failed'),
+            stderr: `C compilation failed: ${compileErrMsg}\nExit Code: ${compile.status}\nSignal: ${compile.signal}\nSpawn Error: ${compile.error ? compile.error.message : 'none'}`,
             runtime: 0,
             memory: 0,
           };
         }
-        const binaryPath = path.join(runDir, process.platform === 'win32' ? 'main.exe' : 'main');
-        runResult = spawnSync(binaryPath, [], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
+        const binaryPath = path.join(runDir, binaryName);
+        runResult = spawnSync(binaryPath, [], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
       }
       else if (lang === 'cpp' || lang === 'c++') {
         if (!checkCommand('g++') && !checkCommand('gcc')) {
@@ -294,17 +299,20 @@ ${code}
         const cppFile = path.join(runDir, 'main.cpp');
         fs.writeFileSync(cppFile, cppCode);
 
-        const compile = spawnSync('g++', ['main.cpp', '-o', 'main.exe'], { cwd: runDir, timeout: 7000, encoding: 'utf-8' });
+        const binaryName = process.platform === 'win32' ? 'main.exe' : 'main';
+        const compile = spawnSync('g++', ['main.cpp', '-o', binaryName], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
         if (compile.error || compile.status !== 0) {
+          const compileErrMsg = compile.error ? compile.error.message : (compile.stderr || 'Compilation failed');
+          logger.error(`C++ compilation failed: ${compileErrMsg}`, compile.error);
           return {
             status: 'COMPILE_ERROR',
-            stderr: compile.error ? compile.error.message : (compile.stderr || 'Compilation failed'),
+            stderr: `C++ compilation failed: ${compileErrMsg}\nExit Code: ${compile.status}\nSignal: ${compile.signal}\nSpawn Error: ${compile.error ? compile.error.message : 'none'}`,
             runtime: 0,
             memory: 0,
           };
         }
-        const binaryPath = path.join(runDir, process.platform === 'win32' ? 'main.exe' : 'main');
-        runResult = spawnSync(binaryPath, [], { cwd: runDir, timeout: 5000, encoding: 'utf-8' });
+        const binaryPath = path.join(runDir, binaryName);
+        runResult = spawnSync(binaryPath, [], { cwd: runDir, timeout: 30000, encoding: 'utf-8' });
       }
       else {
         return {
@@ -316,19 +324,21 @@ ${code}
       }
 
       if (runResult.error) {
+        logger.error(`Process run error: ${runResult.error.message}`, runResult.error);
         return {
           status: 'COMPILE_ERROR',
-          stderr: runResult.error.message,
-          runtime: 0,
+          stderr: `Execution error (Timeout/Spawn): ${runResult.error.message}\nExit Code: ${runResult.status}\nSignal: ${runResult.signal}\nSpawn Error: ${JSON.stringify(runResult.error)}`,
+          runtime: Date.now() - start,
           memory: 0,
         };
       }
 
       if (runResult.status !== 0) {
+        logger.error(`Process exited with non-zero code ${runResult.status}. Stderr: ${runResult.stderr}`);
         return {
           status: 'COMPILE_ERROR',
-          stderr: runResult.stderr || 'Execution failed',
-          runtime: 10,
+          stderr: runResult.stderr || `Execution failed with exit code: ${runResult.status}\nSignal: ${runResult.signal}`,
+          runtime: Date.now() - start,
           memory: 100,
         };
       }
