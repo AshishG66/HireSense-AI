@@ -218,6 +218,22 @@ async function runTests() {
     addResult('Candidate Resume Upload', 'FAIL', 'Missing candidate token or Job ID');
   }
 
+  // 6.5 Candidate Apply Job
+  if (candidateToken && jobId && versionId) {
+    try {
+      const res = await client.post(
+        `/jobs/${jobId}/apply`,
+        { resumeVersionId: versionId },
+        { headers: { Authorization: `Bearer ${candidateToken}` } }
+      );
+      addResult('Candidate Apply Job', 'PASS');
+    } catch (err: any) {
+      addResult('Candidate Apply Job', 'FAIL', err.response?.data?.message || err.message);
+    }
+  } else {
+    addResult('Candidate Apply Job', 'FAIL', 'Missing candidateToken, jobId, or versionId');
+  }
+
   // 7. Resume Analysis Trigger
   if (candidateToken && versionId) {
     try {
@@ -259,6 +275,54 @@ async function runTests() {
     }
   } else {
     addResult('Mock Interview Session Start', 'FAIL', 'No Candidate token');
+  }
+
+  // 8.2 Candidate Get Session Details (Authorized)
+  if (candidateToken && sessionId) {
+    try {
+      const res = await client.get(
+        `/interviews/${sessionId}`,
+        { headers: { Authorization: `Bearer ${candidateToken}` } }
+      );
+      addResult('Candidate Get Session Details', 'PASS');
+    } catch (err: any) {
+      addResult('Candidate Get Session Details', 'FAIL', err.response?.data?.message || err.message);
+    }
+  } else {
+    addResult('Candidate Get Session Details', 'FAIL', 'Missing candidateToken or sessionId');
+  }
+
+  // 8.4 Mismatched Candidate Authorization Check
+  if (sessionId) {
+    try {
+      // Create a second candidate
+      const secondCandidateEmail = `candidate_prod_2_${timestamp}@test.com`;
+      await client.post('/auth/register', {
+        name: 'Second Candidate Smoke',
+        email: secondCandidateEmail,
+        password,
+        role: 'CANDIDATE',
+      });
+      const loginRes = await client.post('/auth/login', {
+        email: secondCandidateEmail,
+        password,
+      });
+      const secondCandidateToken = loginRes.data.data.accessToken;
+
+      // Try to fetch first candidate's session details
+      await client.get(`/interviews/${sessionId}`, {
+        headers: { Authorization: `Bearer ${secondCandidateToken}` },
+      });
+      addResult('Mismatched Candidate Authorization Check', 'FAIL', 'Allowed unauthorized session access');
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        addResult('Mismatched Candidate Authorization Check', 'PASS');
+      } else {
+        addResult('Mismatched Candidate Authorization Check', 'FAIL', `Expected 403 but got: ${err.response?.status} - ${err.message}`);
+      }
+    }
+  } else {
+    addResult('Mismatched Candidate Authorization Check', 'FAIL', 'No sessionId');
   }
 
   // 9. Candidate submits Mock Interview answer

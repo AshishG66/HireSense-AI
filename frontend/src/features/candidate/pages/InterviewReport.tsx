@@ -21,6 +21,7 @@ import {
   CheckCircle,
   AlertTriangle,
   Lightbulb,
+  RefreshCw,
 } from 'lucide-react';
 import api from '../../../utils/api';
 
@@ -29,6 +30,8 @@ export default function InterviewReport() {
   const navigate = useNavigate();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [compiling, setCompiling] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Toast
   const [toastMsg, setToastMsg] = useState('');
@@ -39,20 +42,40 @@ export default function InterviewReport() {
     setShowToast(true);
   };
 
+  const fetchReport = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg('');
+      const res = await api.get(`/interviews/${id}`);
+      setSession(res.data.data);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Unable to retrieve interview report';
+      setErrorMsg(msg);
+      triggerToast('Unable to retrieve interview report: ' + msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchReport = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get(`/interviews/${id}`);
-        setSession(res.data.data);
-      } catch (err: any) {
-        triggerToast('Unable to retrieve interview report: ' + (err.response?.data?.message || err.message));
-      } finally {
-        setLoading(false);
-      }
-    };
     if (id) fetchReport();
   }, [id]);
+
+  const handleCompile = async () => {
+    try {
+      setCompiling(true);
+      setErrorMsg('');
+      const res = await api.post(`/interviews/${id}/report`);
+      setSession(res.data.data);
+      triggerToast('Interview report compiled successfully!');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Compilation failed';
+      setErrorMsg(msg);
+      triggerToast('Failed to compile report: ' + msg);
+    } finally {
+      setCompiling(false);
+    }
+  };
 
   const handleExportPDF = () => {
     window.print();
@@ -70,17 +93,54 @@ export default function InterviewReport() {
     );
   }
 
+  if (compiling) {
+    return (
+      <div className="text-center py-20 space-y-4">
+        <RefreshCw className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-foreground">Compiling Report Analytics...</h2>
+        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+          AI index gauges, semantic response evaluations, and improvement highlights are processing. Please wait.
+        </p>
+      </div>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="text-center py-20 space-y-4">
+        <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto" />
+        <h2 className="text-xl font-bold text-foreground">Error Loading Report</h2>
+        <p className="text-sm text-rose-400/80 max-w-sm mx-auto">
+          {errorMsg}
+        </p>
+        <div className="flex justify-center gap-4">
+          <Button onClick={fetchReport}>
+            Retry Fetching
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/candidate/mock-interview')}>
+            Back to Interviews
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!session || !session.feedbackDetails) {
     return (
       <div className="text-center py-20 space-y-4">
         <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
-        <h2 className="text-xl font-bold text-foreground">Report Not Available</h2>
+        <h2 className="text-xl font-bold text-foreground">Report Not Compiled</h2>
         <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-          The final report could not be found or evaluation compiles are still pending in the background.
+          The performance analysis for this session has not been compiled yet. Click the button below to generate it.
         </p>
-        <Button onClick={() => navigate('/candidate/mock-interview')}>
-          Back to Interviews
-        </Button>
+        <div className="flex justify-center gap-4">
+          <Button onClick={handleCompile}>
+            Compile Report Now
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/candidate/mock-interview')}>
+            Back to Interviews
+          </Button>
+        </div>
       </div>
     );
   }

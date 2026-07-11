@@ -53,3 +53,8 @@ venv.bak/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Uploads and temporary runs
+backend/uploads/
+backend/temp_runs/
+

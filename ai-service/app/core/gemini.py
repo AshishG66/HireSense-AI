@@ -176,8 +176,8 @@ class GeminiClient:
         response_schema: Type[BaseModel],
         model: str = "gemini-2.5-flash",
         temperature: float = 0.1,
-        max_retries: int = 3,
-        timeout: float = 30.0
+        max_retries: int = 2,
+        timeout: float = 10.0
     ) -> Any:
         """
         Unified structured content generation method.

@@ -53,7 +53,10 @@ export class InterviewsController {
   }
 
   async getSessionDetails(req: Request, res: Response) {
-    const session = await interviewsService.getSessionDetails(req.params.sessionId);
+    const userId = req.user?.userId;
+    if (!userId) throw new UnauthorizedError('Unauthorized');
+
+    const session = await interviewsService.getSessionDetails(userId, req.params.sessionId);
     return res.json(ApiResponse.success(session, 'Session details retrieved'));
   }
 

@@ -1,4 +1,5 @@
 import { ApplicationStatus } from '@prisma/client';
+import prisma from '../lib/prisma';
 import applicationsRepository from '../repositories/applications.repository';
 import jobsRepository from '../repositories/jobs.repository';
 import usersRepository from '../repositories/users.repository';
@@ -35,19 +36,18 @@ export class ApplicationsService {
     }
 
     let resumeVersionId = data.resumeVersionId;
-    const db = require('../../lib/prisma').default;
-    const versionExists = await db.resumeVersion.findFirst({
+    const versionExists = await prisma.resumeVersion.findFirst({
       where: { id: resumeVersionId },
     });
 
     if (!versionExists) {
-      const existingVersion = await db.resumeVersion.findFirst({
+      const existingVersion = await prisma.resumeVersion.findFirst({
         where: { resume: { candidateProfileId: candidate.id } },
       });
       if (existingVersion) {
         resumeVersionId = existingVersion.id;
       } else {
-        const newResume = await db.resume.create({
+        const newResume = await prisma.resume.create({
           data: {
             title: 'Primary Resume',
             candidateProfileId: candidate.id,
